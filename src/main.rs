@@ -1,5 +1,6 @@
 use inquire::MultiSelect;
 use git2::{Repository, StatusOptions};
+use std::path::Path;
 
 fn main() {
     let repo = match Repository::discover(".") {
@@ -36,11 +37,35 @@ fn main() {
         return;
     }
 
-    let _ = match MultiSelect::new("Select files to add:", files_to_add).prompt() {
+    let selected_files = match MultiSelect::new("Select files to add:", files_to_add).prompt() {
         Ok(choices) => choices,
         Err(err) => {
             println!("An error occurred during selection: {}", err);
             return;
         }
     };
+
+    if selected_files.is_empty() {
+        println!("No files selected.");
+        return;
+    }
+
+    let mut index = match repo.index() {
+        Ok(index) => index,
+        Err(e) => {
+            println!("Error accessing index: {}", e);
+            return;
+        }
+    };
+
+    for file in selected_files.iter() {
+        let path = Path::new(file);
+        if let Err(err) = index.add_path(path) {
+            println!("Error adding file '{}': {}", file, err);
+        }
+    }
+
+    if let Err(e) = index.write() {
+        println!("Error writing index: {}", e);
+    }
 }
