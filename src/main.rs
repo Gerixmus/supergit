@@ -130,9 +130,7 @@ fn main() {
         .prompt();
 
     match should_commit {
-        Ok(true) => {
-            println!("Committing...");
-    
+        Ok(true) => { 
             repo.commit(
                 Some("HEAD"),
                 &signature,
