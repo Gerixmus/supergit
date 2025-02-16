@@ -1,16 +1,8 @@
-use inquire::MultiSelect;
+use inquire::{MultiSelect, Select, Text};
 use git2::{Repository, StatusOptions};
 use std::path::Path;
 
-fn main() {
-    let repo = match Repository::discover(".") {
-        Ok(repo) => repo,
-        Err(_) => {
-            println!("This is not a Git repository.");
-            return;
-        }
-    };
-
+fn get_untracked(repo: &Repository) -> Vec<String> {
     let mut status_opts = StatusOptions::new();
     status_opts.include_untracked(true);
 
@@ -18,7 +10,7 @@ fn main() {
         Ok(statuses) => statuses,
         Err(err) => {
             println!("Error fetching statuses: {}", err);
-            return;
+            return Vec::new();
         }
     };
 
@@ -31,6 +23,20 @@ fn main() {
             }
         }
     }
+
+    files_to_add
+}
+
+fn main() {
+    let repo = match Repository::discover(".") {
+        Ok(repo) => repo,
+        Err(_) => {
+            println!("This is not a Git repository.");
+            return;
+        }
+    };
+
+    let files_to_add = get_untracked(&repo);
 
     if files_to_add.is_empty() {
         println!("No untracked or modified files found.");
@@ -68,4 +74,38 @@ fn main() {
     if let Err(e) = index.write() {
         println!("Error writing index: {}", e);
     }
+
+    let options = vec![
+        "fix",
+        "feat",
+        "chore",
+        "docs",
+        "style",
+        "refactor",
+        "perf",
+        "test",
+        "improvement"
+    ];
+
+    let selected_option = Select::new("Select your prefix", options).prompt();
+
+    let prefix = match selected_option {
+        Ok(choice) => choice,
+        Err(err) => {
+            println!("An error occurred: {}", err);
+            return;
+        }
+    };
+
+    let user_input = Text::new("Enter commit message:").prompt();
+
+    let message = match user_input {
+        Ok(input) => format!("{}: {}", prefix, input),
+        Err(err) => {
+            println!("An error occurred: {}", err);
+            return;
+        }
+    };
+
+    println!("git commit -m \"{}: {}\"", prefix, message)
 }
