@@ -1,6 +1,7 @@
+use directories::ProjectDirs;
 use inquire::{Confirm, MultiSelect, Select, Text};
 use git2::{Repository, StatusOptions};
-use std::{fs, path::Path};
+use std::{fs, path::{Path, PathBuf}};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -8,8 +9,16 @@ struct Config {
     conventional_commits: bool,
 }
 
+fn get_config_path() -> PathBuf {
+    let proj_dirs  = ProjectDirs::from("", "", "cmt")
+        .expect("Failed to get project directory");
+
+    let directory = proj_dirs.config_dir();
+    directory.join("config.toml")
+}
+
 fn load_config() -> Config {
-    let config_path = Path::new("config.toml");
+    let config_path = get_config_path();
 
     let config_content = fs::read_to_string(config_path)
         .unwrap_or_else(|_| "conventional_commits = true".to_string());
@@ -42,7 +51,7 @@ fn get_untracked(repo: &Repository) -> Vec<String> {
     files_to_add
 }
 
-fn get_prefix() -> Result<String, String> {
+fn get_type() -> Result<String, String> {
     let options = vec![
         "fix",
         "feat",
@@ -55,7 +64,7 @@ fn get_prefix() -> Result<String, String> {
         "improvement"
     ];
 
-    let selected_option = Select::new("Select your prefix", options).prompt();
+    let selected_option = Select::new("Select commit type", options).prompt();
 
     match selected_option {
         Ok(choice) => Ok(format!("{}: ", choice)),
@@ -112,10 +121,10 @@ fn main() {
     }
 
     let config = load_config();
-    let mut prefix = String::new();
+    let mut commit_type = String::new();
 
     if config.conventional_commits {
-        prefix = match get_prefix() {
+        commit_type = match get_type() {
             Ok(choice) => choice,
             Err(err) => {
                 println!("An error occurred: {}", err);
@@ -127,7 +136,7 @@ fn main() {
     let user_input = Text::new("Enter commit message:").prompt();
 
     let message = match user_input {
-        Ok(input) => format!("{}{}", prefix, input),
+        Ok(input) => format!("{}{}", commit_type, input),
         Err(err) => {
             println!("An error occurred: {}", err);
             return;
