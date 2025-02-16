@@ -1,6 +1,21 @@
 use inquire::{Confirm, MultiSelect, Select, Text};
 use git2::{Repository, StatusOptions};
-use std::path::Path;
+use std::{fs, path::Path};
+use serde::Deserialize;
+
+#[derive(Deserialize)]
+struct Config {
+    conventional_commits: bool,
+}
+
+fn load_config() -> Config {
+    let config_path = Path::new("config.toml");
+
+    let config_content = fs::read_to_string(config_path)
+        .unwrap_or_else(|_| "conventional_commits = true".to_string());
+
+    toml::from_str(&config_content).expect("Failed to parse config")
+}
 
 fn get_untracked(repo: &Repository) -> Vec<String> {
     let mut status_opts = StatusOptions::new();
@@ -96,13 +111,18 @@ fn main() {
         println!("Error writing index: {}", e);
     }
 
-    let prefix = match get_prefix() {
-        Ok(choice) => choice,
-        Err(err) => {
-            println!("An error occurred: {}", err);
-            return;
-        }
-    };
+    let config = load_config();
+    let mut prefix = String::new();
+
+    if config.conventional_commits {
+        prefix = match get_prefix() {
+            Ok(choice) => choice,
+            Err(err) => {
+                println!("An error occurred: {}", err);
+                return;
+            }
+        };
+    }
 
     let user_input = Text::new("Enter commit message:").prompt();
 
