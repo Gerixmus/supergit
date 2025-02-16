@@ -109,17 +109,6 @@ fn main() {
         }
     };
 
-    for file in selected_files.iter() {
-        let path = Path::new(file);
-        if let Err(err) = index.add_path(path) {
-            println!("Error adding file '{}': {}", file, err);
-        }
-    }
-
-    if let Err(e) = index.write() {
-        println!("Error writing index: {}", e);
-    }
-
     let config = load_config();
     let mut commit_type = String::new();
 
@@ -143,6 +132,21 @@ fn main() {
         }
     };
 
+    let should_commit = Confirm::new(&format!("Commit with message: \"{}\"?", message))
+        .with_default(true)
+        .prompt();
+
+    for file in selected_files.iter() {
+        let path = Path::new(file);
+        if let Err(err) = index.add_path(path) {
+            println!("Error adding file '{}': {}", file, err);
+        }
+    }
+
+    if let Err(e) = index.write() {
+        println!("Error writing index: {}", e);
+    }
+
     let signature = repo.signature().unwrap();
     let tree_oid = index.write_tree().unwrap();
     let tree = repo.find_tree(tree_oid).unwrap();
@@ -161,9 +165,6 @@ fn main() {
 
     let parent_refs: Vec<&git2::Commit> = parent_commits.iter().collect();
 
-    let should_commit = Confirm::new(&format!("Commit with message: \"{}\"?", message))
-        .with_default(true)
-        .prompt();
 
     match should_commit {
         Ok(true) => { 
