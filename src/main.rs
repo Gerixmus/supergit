@@ -43,7 +43,7 @@ fn get_prefix() -> Result<String, String> {
     let selected_option = Select::new("Select your prefix", options).prompt();
 
     match selected_option {
-        Ok(choice) => Ok(choice.to_string()),
+        Ok(choice) => Ok(format!("{}: ", choice)),
         Err(err) => Err(format!("An error occurred: {}", err))
     }
 }
@@ -107,7 +107,7 @@ fn main() {
     let user_input = Text::new("Enter commit message:").prompt();
 
     let message = match user_input {
-        Ok(input) => format!("{}: {}", prefix, input),
+        Ok(input) => format!("{}{}", prefix, input),
         Err(err) => {
             println!("An error occurred: {}", err);
             return;
