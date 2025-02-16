@@ -107,5 +107,32 @@ fn main() {
         }
     };
 
-    println!("git commit -m \"{}\"", message)
+    let signature = repo.signature().unwrap();
+    let tree_oid = index.write_tree().unwrap();
+    let tree = repo.find_tree(tree_oid).unwrap();
+
+    let head = repo.head();
+    let parent_commits = match head {
+        Ok(head) => {
+            if let Ok(parent) = head.peel_to_commit() {
+                vec![parent]
+            } else {
+                vec![]
+            }
+        }
+        Err(_) => vec![],
+    };
+
+    let parent_refs: Vec<&git2::Commit> = parent_commits.iter().collect();
+
+    repo.commit(
+        Some("HEAD"),
+        &signature,
+        &signature,
+        &message,
+        &tree,
+        &parent_refs,
+    ).unwrap();
+
+    println!("Committed with message: {}", message);
 }
