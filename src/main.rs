@@ -9,6 +9,19 @@ struct Config {
     conventional_commits: bool,
 }
 
+fn add_files(selected_files: Vec<String>, index: &mut git2::Index) {
+    for file in selected_files.iter() {
+        let path = Path::new(file);
+        if let Err(err) = index.add_path(path) {
+            println!("Error adding file '{}': {}", file, err);
+        }
+    }
+    
+    if let Err(e) = index.write() {
+        println!("Error writing index: {}", e);
+    }
+}
+
 fn get_config_path() -> PathBuf {
     let proj_dirs  = ProjectDirs::from("", "", "cmt")
         .expect("Failed to get project directory");
@@ -136,16 +149,7 @@ fn main() {
         .with_default(true)
         .prompt();
 
-    for file in selected_files.iter() {
-        let path = Path::new(file);
-        if let Err(err) = index.add_path(path) {
-            println!("Error adding file '{}': {}", file, err);
-        }
-    }
-
-    if let Err(e) = index.write() {
-        println!("Error writing index: {}", e);
-    }
+    add_files(selected_files, &mut index);
 
     let signature = repo.signature().unwrap();
     let tree_oid = index.write_tree().unwrap();
@@ -167,23 +171,23 @@ fn main() {
 
 
     match should_commit {
-        Ok(true) => { 
-            repo.commit(
-                Some("HEAD"),
-                &signature,
-                &signature,
-                &message,
-                &tree,
-                &parent_refs,
-            ).unwrap();
-    
-            println!("✅ Commit successful!");
-        }
-        Ok(false) => {
-            println!("❌ Commit canceled.");
-        }
-        Err(_) => {
-            println!("⚠️ Failed to get user confirmation.");
-        }
+    Ok(true) => { 
+        repo.commit(
+            Some("HEAD"),
+            &signature,
+            &signature,
+            &message,
+            &tree,
+            &parent_refs,
+        ).unwrap();
+
+        println!("✅ Commit successful!");
     }
+    Ok(false) => {
+        println!("❌ Commit canceled.");
+    }
+    Err(_) => {
+        println!("⚠️ Failed to get user confirmation.");
+    }
+}
 }
