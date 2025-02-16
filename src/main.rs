@@ -1,4 +1,4 @@
-use inquire::{MultiSelect, Select, Text};
+use inquire::{Confirm, MultiSelect, Select, Text};
 use git2::{Repository, StatusOptions};
 use std::path::Path;
 
@@ -125,14 +125,30 @@ fn main() {
 
     let parent_refs: Vec<&git2::Commit> = parent_commits.iter().collect();
 
-    repo.commit(
-        Some("HEAD"),
-        &signature,
-        &signature,
-        &message,
-        &tree,
-        &parent_refs,
-    ).unwrap();
+    let should_commit = Confirm::new(&format!("Commit with message: \"{}\"?", message))
+        .with_default(true)
+        .prompt();
 
-    println!("Committed with message: {}", message);
+    match should_commit {
+        Ok(true) => {
+            println!("Committing...");
+    
+            repo.commit(
+                Some("HEAD"),
+                &signature,
+                &signature,
+                &message,
+                &tree,
+                &parent_refs,
+            ).unwrap();
+    
+            println!("✅ Commit successful!");
+        }
+        Ok(false) => {
+            println!("❌ Commit canceled.");
+        }
+        Err(_) => {
+            println!("⚠️ Failed to get user confirmation.");
+        }
+    }
 }
