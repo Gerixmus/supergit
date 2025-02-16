@@ -107,5 +107,5 @@ fn main() {
         }
     };
 
-    println!("git commit -m \"{}: {}\"", prefix, message)
+    println!("git commit -m \"{}\"", message)
 }
