@@ -27,6 +27,27 @@ fn get_untracked(repo: &Repository) -> Vec<String> {
     files_to_add
 }
 
+fn get_prefix() -> Result<String, String> {
+    let options = vec![
+        "fix",
+        "feat",
+        "chore",
+        "docs",
+        "style",
+        "refactor",
+        "perf",
+        "test",
+        "improvement"
+    ];
+
+    let selected_option = Select::new("Select your prefix", options).prompt();
+
+    match selected_option {
+        Ok(choice) => Ok(choice.to_string()),
+        Err(err) => Err(format!("An error occurred: {}", err))
+    }
+}
+
 fn main() {
     let repo = match Repository::discover(".") {
         Ok(repo) => repo,
@@ -75,21 +96,7 @@ fn main() {
         println!("Error writing index: {}", e);
     }
 
-    let options = vec![
-        "fix",
-        "feat",
-        "chore",
-        "docs",
-        "style",
-        "refactor",
-        "perf",
-        "test",
-        "improvement"
-    ];
-
-    let selected_option = Select::new("Select your prefix", options).prompt();
-
-    let prefix = match selected_option {
+    let prefix = match get_prefix() {
         Ok(choice) => choice,
         Err(err) => {
             println!("An error occurred: {}", err);
