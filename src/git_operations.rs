@@ -50,8 +50,6 @@ pub fn add_files(selected_files: Vec<String>, index: &mut git2::Index) -> Result
 }
 
 pub fn push_to_origin() -> Result<(), String> {
-    println!("Starting push_to_origin function.");
-
     let output = Command::new("git")
         .arg("push")
         .arg("origin")
