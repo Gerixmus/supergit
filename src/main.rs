@@ -1,25 +1,13 @@
 use directories::ProjectDirs;
 use inquire::{Confirm, MultiSelect, Select, Text};
-use git2::{Repository, StatusOptions};
-use std::{fs, path::{Path, PathBuf}};
+use std::{fs, path::PathBuf};
 use serde::Deserialize;
+
+mod git_operations;
 
 #[derive(Deserialize)]
 struct Config {
     conventional_commits: bool,
-}
-
-fn add_files(selected_files: Vec<String>, index: &mut git2::Index) {
-    for file in selected_files.iter() {
-        let path = Path::new(file);
-        if let Err(err) = index.add_path(path) {
-            println!("Error adding file '{}': {}", file, err);
-        }
-    }
-    
-    if let Err(e) = index.write() {
-        println!("Error writing index: {}", e);
-    }
 }
 
 fn get_config_path() -> PathBuf {
@@ -34,34 +22,9 @@ fn load_config() -> Config {
     let config_path = get_config_path();
 
     let config_content = fs::read_to_string(config_path)
-        .unwrap_or_else(|_| "conventional_commits = true".to_string());
+        .unwrap_or_else(|_| "conventional_commits = false".to_string());
 
     toml::from_str(&config_content).expect("Failed to parse config")
-}
-
-fn get_untracked(repo: &Repository) -> Vec<String> {
-    let mut status_opts = StatusOptions::new();
-    status_opts.include_untracked(true);
-
-    let statuses = match repo.statuses(Some(&mut status_opts)) {
-        Ok(statuses) => statuses,
-        Err(err) => {
-            println!("Error fetching statuses: {}", err);
-            return Vec::new();
-        }
-    };
-
-    let mut files_to_add = Vec::new();
-    for entry in statuses.iter() {
-        let status = entry.status();
-        if status.is_wt_new() || status.is_wt_modified() {
-            if let Some(path) = entry.path() {
-                files_to_add.push(path.to_string());
-            }
-        }
-    }
-
-    files_to_add
 }
 
 fn get_type() -> Result<String, String> {
@@ -86,15 +49,12 @@ fn get_type() -> Result<String, String> {
 }
 
 fn main() {
-    let repo = match Repository::discover(".") {
-        Ok(repo) => repo,
-        Err(_) => {
-            println!("This is not a Git repository.");
-            return;
-        }
+    let repo = match git_operations::get_repository() {
+        Some(value) => value,
+        None => return,
     };
 
-    let files_to_add = get_untracked(&repo);
+    let files_to_add = git_operations::get_untracked(&repo);
 
     if files_to_add.is_empty() {
         println!("No untracked or modified files found.");
@@ -149,7 +109,10 @@ fn main() {
         .with_default(true)
         .prompt();
 
-    add_files(selected_files, &mut index);
+    if let Err(err) = git_operations::add_files(selected_files, &mut index) {
+        eprintln!("Failed to add files: {}", err);
+        return;
+    }
 
     let signature = repo.signature().unwrap();
     let tree_oid = index.write_tree().unwrap();
