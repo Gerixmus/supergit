@@ -117,6 +117,7 @@ fn main() {
     if let Ok(true) = should_commit {
         match git_operations::commit_and_push(repo, index, message) {
             Ok(()) => {
+                println!("✅ Commit and push successful!");
             }
             Err(err) => {
                 println!("{}", err);
