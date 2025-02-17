@@ -49,82 +49,60 @@ fn get_type() -> Result<String, String> {
 }
 
 fn main() {
-    let repo = match git_operations::get_repository() {
-        Some(value) => value,
-        None => return,
-    };
+    if let Err(err) = run_standard() {
+        eprintln!("❌ Error: {}", err);
+        std::process::exit(1);
+    }
+}
+
+
+fn run_standard() -> Result<(), String> {
+    let repo = git_operations::get_repository()
+        .ok_or("Failed to open repository")?;
 
     let files_to_add = git_operations::get_untracked(&repo);
-
     if files_to_add.is_empty() {
         println!("No untracked or modified files found.");
-        return;
+        return Ok(());
     }
-
-    let selected_files = match MultiSelect::new("Select files to add:", files_to_add).prompt() {
-        Ok(choices) => choices,
-        Err(err) => {
-            println!("An error occurred during selection: {}", err);
-            return;
-        }
-    };
+    let selected_files = MultiSelect::new("Select files to add:", files_to_add)
+        .prompt()
+        .map_err(|e| format!("An error occurred during selection: {}", e))?;
 
     if selected_files.is_empty() {
         println!("No files selected.");
-        return;
+        return Ok(());
     }
 
-    let mut index = match repo.index() {
-        Ok(index) => index,
-        Err(e) => {
-            println!("Error accessing index: {}", e);
-            return;
-        }
-    };
-
+    let mut index = repo.index().map_err(|e| format!("Error accessing index: {}", e))?;
+        
     let config = load_config();
-    let mut commit_type = String::new();
-
-    if config.conventional_commits {
-        commit_type = match get_type() {
-            Ok(choice) => choice,
-            Err(err) => {
-                println!("An error occurred: {}", err);
-                return;
-            }
-        };
-    }
-
-    let user_input = Text::new("Enter commit message:").prompt();
-
-    let message = match user_input {
-        Ok(input) => format!("{}{}", commit_type, input),
-        Err(err) => {
-            println!("An error occurred: {}", err);
-            return;
-        }
+    let commit_type = if config.conventional_commits {
+        get_type().map_err(|e| format!("An error occurred: {}", e))?
+    } else {
+        String::new()
     };
+
+    let user_input = Text::new("Enter commit message:").prompt()
+        .map_err(|e| format!("An error occurred: {}", e))?;
+    let message = format!("{}{}", commit_type, user_input);
 
     let should_commit = Confirm::new(&format!("Commit with message: \"{}\"?", message))
         .with_default(true)
-        .prompt();
+        .prompt()
+        .map_err(|e| format!("Failed to get confirmation: {}", e))?;
 
-    if let Err(err) = git_operations::add_files(selected_files, &mut index) {
-        eprintln!("Failed to add files: {}", err);
-        return;
+    git_operations::add_files(selected_files, &mut index)
+        .map_err(|e| format!("Failed to add files: {}", e))?;
+    
+    if should_commit {
+        git_operations::commit_and_push(repo, index, message)
+            .map_err(|e| format!("❌ Commit and push failed: {}", e))?;
+        
+        println!("✅ Commit and push successful!");
+    } else {
+        println!("❌ Commit canceled or failed to get user confirmation.");
     }
 
-    if let Ok(true) = should_commit {
-        match git_operations::commit_and_push(repo, index, message) {
-            Ok(()) => {
-                println!("✅ Commit and push successful!");
-            }
-            Err(err) => {
-                println!("{}", err);
-            }
-        }
-        return;
-    } else {
-    println!("❌ Commit canceled or failed to get user confirmation.");
-}
+    Ok(())
 }
