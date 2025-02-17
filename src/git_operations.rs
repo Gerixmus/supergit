@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{path::Path, process::Command};
 use git2::{Repository, StatusOptions};
 
 pub fn get_repository() -> Option<Repository> {
@@ -46,5 +46,23 @@ pub fn add_files(selected_files: Vec<String>, index: &mut git2::Index) -> Result
     }
     
     index.write()?;
+    Ok(())
+}
+
+pub fn push_to_origin() -> Result<(), String> {
+    println!("Starting push_to_origin function.");
+
+    let output = Command::new("git")
+        .arg("push")
+        .arg("origin")
+        .arg("HEAD") 
+        .output()
+        .expect("Failed to execute git push command");
+
+    if !output.status.success() {
+        let error_message = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("{}", error_message));
+    }
+
     Ok(())
 }

@@ -133,24 +133,26 @@ fn main() {
     let parent_refs: Vec<&git2::Commit> = parent_commits.iter().collect();
 
 
-    match should_commit {
-    Ok(true) => { 
-        repo.commit(
+    if let Ok(true) = should_commit {
+        if let Err(e) = repo.commit(
             Some("HEAD"),
             &signature,
             &signature,
             &message,
             &tree,
             &parent_refs,
-        ).unwrap();
-
-        println!("✅ Commit successful!");
+        ) {
+            eprintln!("❌ Commit failed: {}", e);
+            return;
+        }
+    
+        if let Err(e) = git_operations::push_to_origin() {
+            eprintln!("❌ Push failed: {}", e);
+            return;
+        }
+    
+        println!("✅ Push successful!");
+    } else {
+        println!("❌ Commit canceled or failed to get user confirmation.");
     }
-    Ok(false) => {
-        println!("❌ Commit canceled.");
-    }
-    Err(_) => {
-        println!("⚠️ Failed to get user confirmation.");
-    }
-}
 }
