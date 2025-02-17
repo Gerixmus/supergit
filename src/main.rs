@@ -114,45 +114,16 @@ fn main() {
         return;
     }
 
-    let signature = repo.signature().unwrap();
-    let tree_oid = index.write_tree().unwrap();
-    let tree = repo.find_tree(tree_oid).unwrap();
-
-    let head = repo.head();
-    let parent_commits = match head {
-        Ok(head) => {
-            if let Ok(parent) = head.peel_to_commit() {
-                vec![parent]
-            } else {
-                vec![]
+    if let Ok(true) = should_commit {
+        match git_operations::commit_and_push(repo, index, message) {
+            Ok(()) => {
+            }
+            Err(err) => {
+                println!("{}", err);
             }
         }
-        Err(_) => vec![],
-    };
-
-    let parent_refs: Vec<&git2::Commit> = parent_commits.iter().collect();
-
-
-    if let Ok(true) = should_commit {
-        if let Err(e) = repo.commit(
-            Some("HEAD"),
-            &signature,
-            &signature,
-            &message,
-            &tree,
-            &parent_refs,
-        ) {
-            eprintln!("❌ Commit failed: {}", e);
-            return;
-        }
-    
-        if let Err(e) = git_operations::push_to_origin() {
-            eprintln!("❌ Push failed: {}", e);
-            return;
-        }
-    
-        println!("✅ Push successful!");
+        return;
     } else {
-        println!("❌ Commit canceled or failed to get user confirmation.");
-    }
+    println!("❌ Commit canceled or failed to get user confirmation.");
+}
 }

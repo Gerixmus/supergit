@@ -64,3 +64,36 @@ pub fn push_to_origin() -> Result<(), String> {
 
     Ok(())
 }
+
+pub fn commit_and_push(repo: git2::Repository, mut index: git2::Index, message: String) -> Result<(), String> {
+    let signature = repo.signature().unwrap();
+    let tree_oid = index.write_tree().unwrap();
+    let tree = repo.find_tree(tree_oid).unwrap();
+    let head = repo.head();
+    let parent_commits = match head {
+        Ok(head) => {
+            if let Ok(parent) = head.peel_to_commit() {
+                vec![parent]
+            } else {
+                vec![]
+            }
+        }
+        Err(_) => vec![],
+    };
+    let parent_refs: Vec<&git2::Commit> = parent_commits.iter().collect();
+    if let Err(err) = repo.commit(
+        Some("HEAD"),
+        &signature,
+        &signature,
+        &message,
+        &tree,
+        &parent_refs,
+    ) {
+        return Err(format!("❌ Commit failed: {}", err));
+    }
+    if let Err(err) = push_to_origin() {
+        return Err(format!("❌ Push failed: {}", err));
+    }
+    
+    Ok(())
+}
