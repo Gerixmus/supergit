@@ -3,7 +3,6 @@ use crate::git_operations;
 pub fn run_branch() -> Result<(), String> {
     let repo = git_operations::get_repository()
         .ok_or("Failed to open repository")?;
-
     let branches = repo.branches(Some(git2::BranchType::Local))
         .map_err(|e| format!("Failed to get branches: {}", e))?;
 
@@ -11,19 +10,21 @@ pub fn run_branch() -> Result<(), String> {
     let current_branch = head
         .and_then(|h| h.shorthand().map(|s| s.to_string()));
 
-    for branch_result in branches {
-        let (branch, _) = branch_result
-            .map_err(|e| format!("Error accessing branch: {}", e))?;
-
+    for branch in branches {
+        let (branch, _) = branch.map_err(|e| format!("Error reading branch: {}", e))?;
         let name = branch.name()
-            .map_err(|e| format!("Failed to get branch name: {}", e))?
-            .unwrap_or("Unnamed branch")
-            .to_string();
+            .map_err(|e| format!("Error getting branch name: {}", e))?
+            .unwrap_or("Unnamed branch");
 
-        if Some(name.clone()) == current_branch {
-            println!("* {}", name);
+        let upstream = match branch.upstream() {
+            Ok(_) => "",
+            Err(_) => " (no upstream)",
+        };
+
+        if Some(name.to_string()) == current_branch {
+            println!("* {}{}", name, upstream);
         } else {
-            println!("  {}", name);
+            println!("  {}{}", name, upstream);
         }
     }
 
