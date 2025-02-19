@@ -3,6 +3,11 @@ use crate::git_operations;
 pub fn run_branch() -> Result<(), String> {
     let repo = git_operations::get_repository()
         .ok_or("Failed to open repository")?;
+
+    if let Err(e) = git_operations::fetch_with_prune(&repo) {
+        eprintln!("Fetch failed: {}", e);
+    }
+
     let branches = repo.branches(Some(git2::BranchType::Local))
         .map_err(|e| format!("Failed to get branches: {}", e))?;
 

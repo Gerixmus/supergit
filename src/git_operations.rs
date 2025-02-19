@@ -1,5 +1,16 @@
 use std::{path::Path, process::Command};
-use git2::{Repository, StatusOptions};
+use git2::{FetchOptions, FetchPrune, Repository, StatusOptions};
+
+pub fn fetch_with_prune(repo: &Repository) -> Result<(), git2::Error> {
+    let mut remote = repo.find_remote("origin")?;
+
+    let mut fetch_options = FetchOptions::new();
+    fetch_options.prune(FetchPrune::On);
+
+    remote.fetch(&["refs/heads/*:refs/remotes/origin/*"], Some(&mut fetch_options), None)?;
+    
+    Ok(())
+}
 
 pub fn get_repository() -> Option<Repository> {
     let repo = match Repository::discover(".") {
