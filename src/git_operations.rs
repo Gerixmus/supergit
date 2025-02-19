@@ -1,7 +1,42 @@
 use std::{path::Path, process::Command};
 use git2::{FetchOptions, FetchPrune, Repository, StatusOptions};
 
-pub fn fetch_with_prune(repo: &Repository) -> Result<(), git2::Error> {
+pub fn get_branches() -> Result<Vec<String>, String> {
+    let repo = get_repository()
+        .ok_or("Failed to open repository")?;
+    if let Err(e) = fetch_with_prune(&repo) {
+        eprintln!("Fetch failed: {}", e);
+    }
+    let branches = repo.branches(Some(git2::BranchType::Local))
+        .map_err(|e| format!("Failed to get branches: {}", e))?;
+    let head = repo.head().ok();
+    let current_branch = head
+        .and_then(|h| h.shorthand().map(|s| s.to_string()));
+
+    let mut branch_names = Vec::new();
+
+    for branch in branches {
+        let (branch, _) = branch.map_err(|e| format!("Error reading branch: {}", e))?;
+        let name = branch.name()
+            .map_err(|e| format!("Error getting branch name: {}", e))?
+            .unwrap_or("Unnamed branch");
+    
+        let upstream = match branch.upstream() {
+            Ok(_) => "",
+            Err(_) => " (no upstream)",
+        };
+    
+        if Some(name.to_string()) == current_branch {
+            branch_names.push(format!("* {}{}", name, upstream));
+        } else {
+            branch_names.push(format!("  {}{}", name, upstream));
+        }
+    }
+
+    Ok(branch_names)
+}
+
+fn fetch_with_prune(repo: &Repository) -> Result<(), git2::Error> {
     let mut remote = repo.find_remote("origin")?;
 
     let mut fetch_options = FetchOptions::new();
