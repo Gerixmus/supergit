@@ -90,8 +90,14 @@ pub fn get_untracked(repo: &Repository) -> Vec<String> {
 pub fn add_files(selected_files: Vec<String>, index: &mut git2::Index) -> Result<(), git2::Error>{
     for file in selected_files.iter() {
         let path = Path::new(file);
-        if let Err(err) = index.add_path(path) {
-            return Err(err);
+        if path.exists() {
+            if let Err(err) = index.add_path(path) {
+                return Err(err);
+            }
+        } else {
+            if let Err(err) = index.remove_path(path) {
+                return Err(err);
+            }
         }
     }
     
