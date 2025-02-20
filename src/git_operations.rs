@@ -1,5 +1,5 @@
 use std::{path::Path, process::Command};
-use git2::{FetchOptions, FetchPrune, Repository, StatusOptions};
+use git2::{FetchOptions, FetchPrune, Repository, Status, StatusOptions};
 
 pub fn get_branches() -> Result<Vec<String>, String> {
     let repo = get_repository()
@@ -73,7 +73,11 @@ pub fn get_untracked(repo: &Repository) -> Vec<String> {
     let mut files_to_add = Vec::new();
     for entry in statuses.iter() {
         let status = entry.status();
-        if status.is_wt_new() || status.is_wt_modified() {
+        if status.intersects(
+            Status::WT_NEW |
+            Status::WT_MODIFIED |
+            Status::WT_DELETED
+        ) {
             if let Some(path) = entry.path() {
                 files_to_add.push(path.to_string());
             }

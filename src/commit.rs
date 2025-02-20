@@ -56,7 +56,7 @@ pub fn run_commit() -> Result<(), String> {
         println!("No untracked or modified files found.");
         return Ok(());
     }
-    let selected_files = MultiSelect::new("Select files to add:", files_to_add)
+    let selected_files = MultiSelect::new("Select changes to commit:", files_to_add)
         .prompt()
         .map_err(|e| format!("An error occurred during selection: {}", e))?;
 
