@@ -51,7 +51,9 @@ pub fn run_commit() -> Result<(), String> {
     let repo = git_operations::get_repository()
         .ok_or("Failed to open repository")?;
 
-    let files_to_add = git_operations::get_untracked(&repo);
+    let changes = git_operations::get_untracked(&repo);
+    let files_to_add: Vec<String> = changes.keys().cloned().collect();
+        
     if files_to_add.is_empty() {
         println!("No untracked or modified files found.");
         return Ok(());

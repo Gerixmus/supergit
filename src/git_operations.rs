@@ -1,4 +1,4 @@
-use std::{path::Path, process::Command};
+use std::{collections::BTreeMap, path::Path, process::Command};
 use git2::{FetchOptions, FetchPrune, Repository, Status, StatusOptions};
 
 pub fn get_branches() -> Result<Vec<String>, String> {
@@ -58,7 +58,7 @@ pub fn get_repository() -> Option<Repository> {
     Some(repo)
 }
 
-pub fn get_untracked(repo: &Repository) -> Vec<String> {
+pub fn get_untracked(repo: &Repository) -> BTreeMap<String, Status> {
     let mut status_opts = StatusOptions::new();
     status_opts.include_untracked(true);
 
@@ -66,25 +66,21 @@ pub fn get_untracked(repo: &Repository) -> Vec<String> {
         Ok(statuses) => statuses,
         Err(err) => {
             println!("Error fetching statuses: {}", err);
-            return Vec::new();
+            return BTreeMap::new();
         }
     };
 
-    let mut files_to_add = Vec::new();
+    let mut changes = BTreeMap::new();
     for entry in statuses.iter() {
         let status = entry.status();
-        if status.intersects(
-            Status::WT_NEW |
-            Status::WT_MODIFIED |
-            Status::WT_DELETED
-        ) {
+        if status.intersects(Status::WT_NEW | Status::WT_MODIFIED | Status::WT_DELETED) {
             if let Some(path) = entry.path() {
-                files_to_add.push(path.to_string());
+                changes.insert(path.to_string(), status);
             }
         }
     }
 
-    files_to_add
+    changes
 }
 
 pub fn add_files(selected_files: Vec<String>, index: &mut git2::Index) -> Result<(), git2::Error>{
