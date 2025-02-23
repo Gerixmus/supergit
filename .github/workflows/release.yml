@@ -5,6 +5,12 @@ on:
     tags:
       - 'v*'
 
+env:
+  CARGO_TERM_COLOR: always
+
+permissions:
+  contents: write
+
 jobs:
     release:
         name: Release pushed tag
