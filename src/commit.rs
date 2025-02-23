@@ -52,13 +52,12 @@ pub fn run_commit() -> Result<(), String> {
         .ok_or("Failed to open repository")?;
 
     let changes = git_operations::get_untracked(&repo);
-    let files_to_add: Vec<String> = changes.keys().cloned().collect();
         
-    if files_to_add.is_empty() {
+    if changes.is_empty() {
         println!("No untracked or modified files found.");
         return Ok(());
     }
-    let selected_files = MultiSelect::new("Select changes to commit:", files_to_add)
+    let selected_files = MultiSelect::new("Select changes to commit:", changes)
         .prompt()
         .map_err(|e| format!("An error occurred during selection: {}", e))?;
 
@@ -85,7 +84,9 @@ pub fn run_commit() -> Result<(), String> {
         .prompt()
         .map_err(|e| format!("Failed to get confirmation: {}", e))?;
 
-    git_operations::add_files(selected_files, &mut index)
+    let selected_file_names: Vec<String> = selected_files.into_iter().map(|change| change.file_name).collect();
+
+    git_operations::add_files(selected_file_names, &mut index)
         .map_err(|e| format!("Failed to add files: {}", e))?;
     
     if should_commit {

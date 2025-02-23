@@ -1,5 +1,24 @@
-use std::{collections::BTreeMap, path::Path, process::Command};
+use core::fmt;
+use std::{path::Path, process::Command};
 use git2::{FetchOptions, FetchPrune, Repository, Status, StatusOptions};
+
+#[derive(Clone)]
+pub struct Change {
+    pub file_name: String,
+    status: git2::Status
+}
+
+impl fmt::Display for Change {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let status_str = match self.status {
+            s if s.contains(Status::WT_NEW) => "new",
+            s if s.contains(Status::WT_MODIFIED) => "modified",
+            s if s.contains(Status::WT_DELETED) => "deleted",
+            _ => "?",
+        };
+        write!(f, "{}: {}", status_str, self.file_name)
+    }
+}
 
 pub fn get_branches() -> Result<Vec<String>, String> {
     let repo = get_repository()
@@ -58,7 +77,7 @@ pub fn get_repository() -> Option<Repository> {
     Some(repo)
 }
 
-pub fn get_untracked(repo: &Repository) -> BTreeMap<String, Status> {
+pub fn get_untracked(repo: &Repository) -> Vec<Change> {
     let mut status_opts = StatusOptions::new();
     status_opts.include_untracked(true);
 
@@ -66,16 +85,20 @@ pub fn get_untracked(repo: &Repository) -> BTreeMap<String, Status> {
         Ok(statuses) => statuses,
         Err(err) => {
             println!("Error fetching statuses: {}", err);
-            return BTreeMap::new();
+            return Vec::new();
         }
     };
 
-    let mut changes = BTreeMap::new();
+    let mut changes= Vec::new();
     for entry in statuses.iter() {
         let status = entry.status();
         if status.intersects(Status::WT_NEW | Status::WT_MODIFIED | Status::WT_DELETED) {
             if let Some(path) = entry.path() {
-                changes.insert(path.to_string(), status);
+                let file_name = path.to_string();
+                changes.push(Change {
+                    file_name,
+                    status
+                });
             }
         }
     }
