@@ -1,1 +1,1 @@
-[![Build](https://github.com/Gerixmus/cmt/actions/workflows/rust.yml/badge.svg)](https://github.com/Gerixmus/cmt/actions/workflows/rust.yml)
+[![Build](https://github.com/Gerixmus/cmt/actions/workflows/build.yml/badge.svg)](https://github.com/Gerixmus/cmt/actions/workflows/build.yml)
