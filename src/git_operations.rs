@@ -1,5 +1,6 @@
 use core::fmt;
 use std::{path::Path, process::Command};
+use colored::Colorize;
 use git2::{FetchOptions, FetchPrune, Repository, Status, StatusOptions};
 
 #[derive(Clone)]
@@ -29,8 +30,13 @@ pub struct BranchInfo {
 impl fmt::Display for BranchInfo {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let current_marker = if self.is_current { "* " } else { "  " };
-        let upstream_marker = if self.upstream { "" } else { " (no upstream)" };
-        write!(f, "{}{}{}", current_marker, self.name, upstream_marker)
+        let upstream_marker = if self.upstream { String::new() } else { " (no upstream)".red().to_string() };
+        let branch_name = if self.is_current {
+            self.name.green()
+        } else {
+            self.name.normal()
+        };
+        write!(f, "{}{}{}", current_marker, branch_name, upstream_marker)
     }
 }
 
