@@ -4,7 +4,7 @@ use git2::{FetchOptions, FetchPrune, Repository, Status, StatusOptions};
 
 #[derive(Clone)]
 pub struct Change {
-    pub file_name: String,
+    pub path: String,
     status: git2::Status
 }
 
@@ -16,7 +16,7 @@ impl fmt::Display for Change {
             s if s.contains(Status::WT_DELETED) => "deleted",
             _ => "?",
         };
-        write!(f, "{}: {}", status_str, self.file_name)
+        write!(f, "{}: {}", status_str, self.path)
     }
 }
 
@@ -94,9 +94,9 @@ pub fn get_untracked(repo: &Repository) -> Vec<Change> {
         let status = entry.status();
         if status.intersects(Status::WT_NEW | Status::WT_MODIFIED | Status::WT_DELETED) {
             if let Some(path) = entry.path() {
-                let file_name = path.to_string();
+                let path = path.to_string();
                 changes.push(Change {
-                    file_name,
+                    path,
                     status
                 });
             }
@@ -106,17 +106,13 @@ pub fn get_untracked(repo: &Repository) -> Vec<Change> {
     changes
 }
 
-pub fn add_files(selected_files: Vec<String>, index: &mut git2::Index) -> Result<(), git2::Error>{
-    for file in selected_files.iter() {
-        let path = Path::new(file);
-        if path.exists() {
-            if let Err(err) = index.add_path(path) {
-                return Err(err);
-            }
+pub fn add_files(selected_files: Vec<Change>, index: &mut git2::Index) -> Result<(), git2::Error>{
+    for change in selected_files.iter() {
+        let path = Path::new(&change.path);
+        if change.status == Status::WT_DELETED {
+            index.remove_path(path).map_err(|err| err)?;
         } else {
-            if let Err(err) = index.remove_path(path) {
-                return Err(err);
-            }
+            index.add_path(path).map_err(|err| err)?;
         }
     }
     

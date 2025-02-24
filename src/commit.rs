@@ -84,9 +84,7 @@ pub fn run_commit() -> Result<(), String> {
         .prompt()
         .map_err(|e| format!("Failed to get confirmation: {}", e))?;
 
-    let selected_file_names: Vec<String> = selected_files.into_iter().map(|change| change.file_name).collect();
-
-    git_operations::add_files(selected_file_names, &mut index)
+    git_operations::add_files(selected_files, &mut index)
         .map_err(|e| format!("Failed to add files: {}", e))?;
     
     if should_commit {
