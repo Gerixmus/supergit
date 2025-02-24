@@ -20,7 +20,21 @@ impl fmt::Display for Change {
     }
 }
 
-pub fn get_branches() -> Result<Vec<String>, String> {
+pub struct BranchInfo {
+    pub name: String,
+    pub is_current: bool,
+    pub upstream: bool
+}
+
+impl fmt::Display for BranchInfo {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let current_marker = if self.is_current { "* " } else { "  " };
+        let upstream_marker = if self.upstream { "" } else { " (no upstream)" };
+        write!(f, "{}{}{}", current_marker, self.name, upstream_marker)
+    }
+}
+
+pub fn get_branches() -> Result<Vec<BranchInfo>, String> {
     let repo = get_repository()
         .ok_or("Failed to open repository")?;
     if let Err(e) = fetch_with_prune(&repo) {
@@ -32,27 +46,24 @@ pub fn get_branches() -> Result<Vec<String>, String> {
     let current_branch = head
         .and_then(|h| h.shorthand().map(|s| s.to_string()));
 
-    let mut branch_names = Vec::new();
+    let mut branch_list = Vec::new();
 
     for branch in branches {
         let (branch, _) = branch.map_err(|e| format!("Error reading branch: {}", e))?;
         let name = branch.name()
             .map_err(|e| format!("Error getting branch name: {}", e))?
-            .unwrap_or("Unnamed branch");
-    
-        let upstream = match branch.upstream() {
-            Ok(_) => "",
-            Err(_) => " (no upstream)",
-        };
-    
-        if Some(name.to_string()) == current_branch {
-            branch_names.push(format!("* {}{}", name, upstream));
-        } else {
-            branch_names.push(format!("  {}{}", name, upstream));
-        }
+            .unwrap_or("Unnamed branch")
+            .to_string();
+        let upstream = branch.upstream().is_ok();
+
+        branch_list.push(BranchInfo{
+            is_current: Some(name.clone()) == current_branch,
+            name,
+            upstream
+        });
     }
 
-    Ok(branch_names)
+    Ok(branch_list)
 }
 
 fn fetch_with_prune(repo: &Repository) -> Result<(), git2::Error> {
@@ -164,6 +175,27 @@ pub fn commit_and_push(repo: git2::Repository, mut index: git2::Index, message: 
     }
     if let Err(err) = push_to_origin() {
         return Err(format!("❌ Push failed: {}", err));
+    }
+    
+    Ok(())
+}
+
+pub fn checkout_branch(branch: &str) -> Result<(), String>  {
+    let repo = get_repository().ok_or("Failed to open repository")?;
+
+    let (object, reference) = repo
+        .revparse_ext(branch)
+        .map_err(|e| format!("Failed to find branch: {}", e))?;
+
+    repo.checkout_tree(&object, None)
+        .map_err(|e| format!("Failed to checkout tree: {}", e))?;
+
+    if let Some(reference) = reference {
+        repo.set_head(reference.name().ok_or("Invalid branch reference")?)
+            .map_err(|e| format!("Failed to set HEAD: {}", e))?;
+    } else {
+        repo.set_head_detached(object.id())
+            .map_err(|e| format!("Failed to set HEAD detached: {}", e))?;
     }
     
     Ok(())
