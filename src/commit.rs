@@ -1,6 +1,5 @@
 use inquire::{Confirm, MultiSelect, Select, Text};
 use crate::git_operations;
-use crate::config;
 
 fn get_type() -> Result<String, String> {
     let options = vec![
@@ -23,7 +22,7 @@ fn get_type() -> Result<String, String> {
     }
 }
 
-pub fn run_commit() -> Result<(), String> {
+pub fn run_commit(conventional_commit: bool) -> Result<(), String> {
     let repo = git_operations::get_repository()
         .ok_or("Failed to open repository")?;
 
@@ -44,8 +43,7 @@ pub fn run_commit() -> Result<(), String> {
 
     let mut index = repo.index().map_err(|e| format!("Error accessing index: {}", e))?;
         
-    let config = config::load_config();
-    let commit_type = if config.conventional_commits {
+    let commit_type = if conventional_commit {
         get_type().map_err(|e| format!("An error occurred: {}", e))?
     } else {
         String::new()

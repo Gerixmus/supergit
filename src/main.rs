@@ -23,9 +23,10 @@ enum Commands {
 
 fn main() {
     let cli = Cli::parse();
+    let config = config::load_config();
     match &cli.command {
         Some(Commands::Commit) => {
-            if let Err(err) = commit::run_commit() {
+            if let Err(err) = commit::run_commit(config.conventional_commits) {
                 eprintln!("❌ Error: {}", err);
                 std::process::exit(1);
             }
