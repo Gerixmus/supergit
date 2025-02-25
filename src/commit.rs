@@ -1,30 +1,6 @@
-use std::{fs, path::PathBuf};
-use directories::ProjectDirs;
 use inquire::{Confirm, MultiSelect, Select, Text};
-use serde::Deserialize;
 use crate::git_operations;
-
-#[derive(Deserialize)]
-struct Config {
-    conventional_commits: bool,
-}
-
-fn get_config_path() -> PathBuf {
-    let proj_dirs  = ProjectDirs::from("", "", "cmt")
-        .expect("Failed to get project directory");
-
-    let directory = proj_dirs.config_dir();
-    directory.join("config.toml")
-}
-
-fn load_config() -> Config {
-    let config_path = get_config_path();
-
-    let config_content = fs::read_to_string(config_path)
-        .unwrap_or_else(|_| "conventional_commits = false".to_string());
-
-    toml::from_str(&config_content).expect("Failed to parse config")
-}
+use crate::config;
 
 fn get_type() -> Result<String, String> {
     let options = vec![
@@ -68,7 +44,7 @@ pub fn run_commit() -> Result<(), String> {
 
     let mut index = repo.index().map_err(|e| format!("Error accessing index: {}", e))?;
         
-    let config = load_config();
+    let config = config::load_config();
     let commit_type = if config.conventional_commits {
         get_type().map_err(|e| format!("An error occurred: {}", e))?
     } else {

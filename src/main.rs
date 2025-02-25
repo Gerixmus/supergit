@@ -4,6 +4,7 @@ mod git_operations;
 mod commit;
 mod branch;
 mod checkout;
+mod config;
 
 #[derive(Parser)]
 #[command(name = "cmt", version = "1.0", about = "Commit management tool")]
