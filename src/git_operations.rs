@@ -206,3 +206,13 @@ pub fn checkout_branch(branch: &str) -> Result<(), String>  {
     
     Ok(())
 }
+
+pub fn get_current_branch() -> Result<String, String> {
+    let repo = get_repository().ok_or("Failed to open repository")?;
+
+    let head = repo.head().map_err(|e| format!("Failed to get HEAD: {}", e))?;
+
+    head.shorthand()
+    .map(|s| s.to_string())
+    .ok_or_else(|| "Failed to get branch name".to_string())
+}
