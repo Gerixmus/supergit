@@ -26,7 +26,10 @@ fn main() {
     let config = config::load_config();
     match &cli.command {
         Some(Commands::Commit) => {
-            if let Err(err) = commit::run_commit(config.conventional_commits) {
+            if let Err(err) = commit::run_commit(
+                config.conventional_commits, 
+                config.ticket_prefix
+            ) {
                 eprintln!("❌ Error: {}", err);
                 std::process::exit(1);
             }

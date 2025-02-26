@@ -6,14 +6,14 @@ use serde::{Deserialize, Serialize};
 #[derive(Deserialize, Serialize)]
 pub struct Config {
     pub conventional_commits: bool,
-    pub ticket_prefix: String
+    pub ticket_prefix: bool
 }
 
 impl Config {
     pub fn default() -> Self {
         Config {
             conventional_commits: false,
-            ticket_prefix: "".to_string()
+            ticket_prefix: false
         }
     }
 }

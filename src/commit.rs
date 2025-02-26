@@ -1,4 +1,5 @@
 use inquire::{Confirm, MultiSelect, Select, Text};
+use regex::Regex;
 use crate::git_operations;
 
 fn get_type() -> Result<String, String> {
@@ -17,12 +18,12 @@ fn get_type() -> Result<String, String> {
     let selected_option = Select::new("Select commit type", options).prompt();
 
     match selected_option {
-        Ok(choice) => Ok(format!("{}: ", choice)),
+        Ok(choice) => Ok(format!("{}", choice)),
         Err(err) => Err(format!("An error occurred: {}", err))
     }
 }
 
-pub fn run_commit(conventional_commit: bool) -> Result<(), String> {
+pub fn run_commit(conventional_commit: bool, ticket_prefix: bool) -> Result<(), String> {
     let repo = git_operations::get_repository()
         .ok_or("Failed to open repository")?;
 
@@ -49,9 +50,19 @@ pub fn run_commit(conventional_commit: bool) -> Result<(), String> {
         String::new()
     };
 
+    let ticket = if ticket_prefix {
+        let re = Regex::new(r"[A-Z]+-[0-9]+").unwrap();
+        let branch = git_operations::get_current_branch().unwrap();
+        re.find(&branch)
+            .map(|regex_match| format!("({}): ", regex_match.as_str()))
+            .unwrap_or_else(|| ": ".to_string())
+    } else {
+        ": ".to_string()
+    };
+
     let user_input = Text::new("Enter commit message:").prompt()
         .map_err(|e| format!("An error occurred: {}", e))?;
-    let message = format!("{}{}", commit_type, user_input);
+    let message = format!("{}{}{}", commit_type, ticket, user_input);
 
     let should_commit = Confirm::new(&format!("Commit with message: \"{}\"?", message))
         .with_default(true)
