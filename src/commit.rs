@@ -69,13 +69,11 @@ pub fn run_commit(conventional_commit: bool, ticket_prefix: bool) -> Result<(), 
         .prompt()
         .map_err(|e| format!("Failed to get confirmation: {}", e))?;
 
-    git_operations::add_files(selected_files, &mut index)
-        .map_err(|e| format!("Failed to add files: {}", e))?;
-    
     if should_commit {
+        git_operations::add_files(selected_files, &mut index)
+            .map_err(|e| format!("Failed to add files: {}", e))?;
         git_operations::commit_and_push(repo, index, message)
             .map_err(|e| format!("❌ Commit and push failed: {}", e))?;
-        
         println!("✅ Commit and push successful!");
     } else {
         println!("❌ Commit canceled or failed to get user confirmation.");
