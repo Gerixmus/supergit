@@ -19,6 +19,7 @@ enum Commands {
     Checkout,
     Branch,
     Ignore,
+    Config
 }
 
 fn main() {
@@ -48,6 +49,12 @@ fn main() {
         }
         Some(Commands::Ignore) => {
             println!("Ignore logic to implement later");
+        }
+        Some(Commands::Config) => {
+            if let Err(err) = config::run_config() {
+                eprintln!("❌ Error: {}", err);
+                std::process::exit(1);
+            }
         }
         None => {
             println!("Default logic to implement later");
