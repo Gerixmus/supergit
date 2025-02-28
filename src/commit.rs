@@ -45,8 +45,8 @@ pub fn run_commit(conventional_commit: bool, ticket_prefix: bool) -> Result<(), 
     let mut index = repo.index().map_err(|e| format!("Error accessing index: {}", e))?;
         
     let commit_type = if conventional_commit {
-        let mut commit_type = get_type().map_err(|e| format!("An error occurred: {}", e))?
-        format!("{}:", commit_type)
+        let selected_type = get_type().map_err(|e| format!("An error occurred: {}", e))?;
+        format!("{}: ", selected_type)
     } else {
         String::new()
     };
