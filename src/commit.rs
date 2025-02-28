@@ -45,7 +45,8 @@ pub fn run_commit(conventional_commit: bool, ticket_prefix: bool) -> Result<(), 
     let mut index = repo.index().map_err(|e| format!("Error accessing index: {}", e))?;
         
     let commit_type = if conventional_commit {
-        get_type().map_err(|e| format!("An error occurred: {}", e))?
+        let selected_type = get_type().map_err(|e| format!("An error occurred: {}", e))?;
+        format!("{}: ", selected_type)
     } else {
         String::new()
     };
@@ -54,15 +55,15 @@ pub fn run_commit(conventional_commit: bool, ticket_prefix: bool) -> Result<(), 
         let re = Regex::new(r"[A-Z]+-[0-9]+").unwrap();
         let branch = git_operations::get_current_branch().unwrap();
         re.find(&branch)
-            .map(|regex_match| format!("({}): ", regex_match.as_str()))
-            .unwrap_or_else(|| ": ".to_string())
+            .map(|regex_match| format!("({}) ", regex_match.as_str()))
+            .unwrap_or_else(|| "".to_string())
     } else {
-        ": ".to_string()
+        "".to_string()
     };
 
     let user_input = Text::new("Enter commit message:").prompt()
         .map_err(|e| format!("An error occurred: {}", e))?;
-    let message = format!("{}{}{}", commit_type, ticket, user_input);
+    let message = format!("{}{}{}", ticket, commit_type, user_input);
 
     let should_commit = Confirm::new(&format!("Commit with message: \"{}\"?", message))
         .with_default(true)
