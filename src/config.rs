@@ -45,6 +45,9 @@ pub fn run_config() -> Result<(), String> {
 }
 
 fn save_config(config: &Config, config_path: &PathBuf) -> io::Result<()> {
+    if let Some(directory) = config_path.parent() {
+        fs::create_dir_all(directory)?
+    };
     let content = toml::to_string(config).unwrap();
     let mut file = fs::File::create(config_path)?;
     file.write_all(content.as_bytes())?;
