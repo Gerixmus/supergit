@@ -41,8 +41,7 @@ impl fmt::Display for BranchInfo {
 }
 
 pub fn get_branches() -> Result<Vec<BranchInfo>, String> {
-    let repo = get_repository()
-        .ok_or("Failed to open repository")?;
+    let repo = get_repository()?;
     if let Err(e) = fetch_with_prune(&repo) {
         eprintln!("Fetch failed: {}", e);
     }
@@ -83,15 +82,10 @@ fn fetch_with_prune(repo: &Repository) -> Result<(), git2::Error> {
     Ok(())
 }
 
-pub fn get_repository() -> Option<Repository> {
-    let repo = match Repository::discover(".") {
-        Ok(repo) => repo,
-        Err(_) => {
-            println!("This is not a Git repository.");
-            return None;
-        }
-    };
-    Some(repo)
+pub fn get_repository() -> Result<Repository, String> {
+    Repository::discover(".").map_err(|e| {
+        format!("Failed to open repository: {}", e)
+    })
 }
 
 pub fn get_untracked(repo: &Repository) -> Vec<Change> {
@@ -187,7 +181,7 @@ pub fn commit_and_push(repo: git2::Repository, mut index: git2::Index, message: 
 }
 
 pub fn checkout_branch(branch: &str) -> Result<(), String>  {
-    let repo = get_repository().ok_or("Failed to open repository")?;
+    let repo = get_repository()?;
 
     let (object, reference) = repo
         .revparse_ext(branch)
@@ -208,7 +202,7 @@ pub fn checkout_branch(branch: &str) -> Result<(), String>  {
 }
 
 pub fn get_current_branch() -> Result<String, String> {
-    let repo = get_repository().ok_or("Failed to open repository")?;
+    let repo = get_repository()?;
 
     let head = repo.head().map_err(|e| format!("Failed to get HEAD: {}", e))?;
 
