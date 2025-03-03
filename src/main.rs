@@ -25,39 +25,23 @@ enum Commands {
 fn main() {
     let cli = Cli::parse();
     let config = config::load_config();
-    match &cli.command {
-        Some(Commands::Commit) => {
-            if let Err(err) = commit::run_commit(
-                config.conventional_commits, 
-                config.ticket_prefix
-            ) {
-                eprintln!("❌ Error: {}", err);
-                std::process::exit(1);
-            }
-        }
-        Some(Commands::Branch) => {
-            if let Err(err) = branch::run_branch() {
-                eprintln!("❌ Error: {}", err);
-                std::process::exit(1);
-            }
-        }
-        Some(Commands::Checkout) => {
-            if let Err(err) = checkout::run_checkout() {
-                eprintln!("❌ Error: {}", err);
-                std::process::exit(1);
-            }
-        }
+    let result = match &cli.command {
+        Some(Commands::Commit) => commit::run_commit(config.conventional_commits, config.ticket_prefix),
+        Some(Commands::Branch) => branch::run_branch(),
+        Some(Commands::Checkout) => checkout::run_checkout(),
         Some(Commands::Ignore) => {
             println!("Ignore logic to implement later");
+            Ok(())
         }
-        Some(Commands::Config) => {
-            if let Err(err) = config::run_config() {
-                eprintln!("❌ Error: {}", err);
-                std::process::exit(1);
-            }
-        }
+        Some(Commands::Config) => config::run_config(),
         None => {
             println!("Default logic to implement later");
+            Ok(())
         }
+    };
+    
+    if let Err(err) = result {
+        eprintln!("❌ Error: {}", err);
+        std::process::exit(1);
     }
 }
