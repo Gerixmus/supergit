@@ -148,35 +148,17 @@ pub fn push_to_origin() -> Result<(), String> {
 }
 
 pub fn commit_and_push(repo: git2::Repository, mut index: git2::Index, message: String) -> Result<(), String> {
-    let signature = repo.signature().unwrap();
-    let tree_oid = index.write_tree().unwrap();
-    let tree = repo.find_tree(tree_oid).unwrap();
-    let head = repo.head();
-    let parent_commits = match head {
-        Ok(head) => {
-            if let Ok(parent) = head.peel_to_commit() {
-                vec![parent]
-            } else {
-                vec![]
-            }
-        }
-        Err(_) => vec![],
-    };
+    let signature = repo.signature().map_err(|e| e.to_string())?;
+    let tree_oid = index.write_tree().map_err(|e| e.to_string())?;
+    let tree = repo.find_tree(tree_oid).map_err(|e| e.to_string())?;
+    let parent_commits: Vec<git2::Commit> = repo.head()
+        .ok()
+        .and_then(|head| head.peel_to_commit().ok().map(|c| vec![c]))
+        .unwrap_or_default(); 
     let parent_refs: Vec<&git2::Commit> = parent_commits.iter().collect();
-    if let Err(err) = repo.commit(
-        Some("HEAD"),
-        &signature,
-        &signature,
-        &message,
-        &tree,
-        &parent_refs,
-    ) {
-        return Err(format!("❌ Commit failed: {}", err));
-    }
-    if let Err(err) = push_to_origin() {
-        return Err(format!("❌ Push failed: {}", err));
-    }
-    
+    repo.commit(Some("HEAD"), &signature,&signature, &message,&tree,&parent_refs)
+    .map_err(|e|format!("❌ Commit failed: {}", e))?;
+    push_to_origin()?;
     Ok(())
 }
 
