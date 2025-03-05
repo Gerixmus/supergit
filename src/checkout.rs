@@ -3,7 +3,7 @@ use inquire::Select;
 use crate::git_operations;
 
 pub fn run_checkout() -> Result<(), String> {
-    let branches = git_operations::get_branches()?;
+    let branches = git_operations::get_branches().map_err(|e| e.to_string())?;
     let available_branches: Vec<&git_operations::BranchInfo> = branches
         .iter()
         .filter(|branch| !branch.is_current)
@@ -13,7 +13,7 @@ pub fn run_checkout() -> Result<(), String> {
         .prompt()
         .map_err(|e| format!("Prompt error: {}", e))?;
 
-    git_operations::checkout_branch(&selected_branch.name)?;
+    git_operations::checkout_branch(&selected_branch.name).map_err(|e| e.to_string())?;
     
     Ok(())
 }

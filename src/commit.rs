@@ -24,7 +24,7 @@ fn get_type() -> Result<String, String> {
 }
 
 pub fn run_commit(conventional_commit: bool, ticket_prefix: bool) -> Result<(), String> {
-    let repo = git_operations::get_repository()?;
+    let repo = git_operations::get_repository().map_err(|e| e.to_string())?;
 
     let changes = git_operations::get_untracked(&repo);
         

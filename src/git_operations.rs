@@ -40,13 +40,12 @@ impl fmt::Display for BranchInfo {
     }
 }
 
-pub fn get_branches() -> Result<Vec<BranchInfo>, String> {
+pub fn get_branches() -> Result<Vec<BranchInfo>, git2::Error> {
     let repo = get_repository()?;
     if let Err(e) = fetch_with_prune(&repo) {
         eprintln!("Fetch failed: {}", e);
     }
-    let branches = repo.branches(Some(git2::BranchType::Local))
-        .map_err(|e| format!("Failed to get branches: {}", e))?;
+    let branches = repo.branches(Some(git2::BranchType::Local))?;
     let head = repo.head().ok();
     let current_branch = head
         .and_then(|h| h.shorthand().map(|s| s.to_string()));
@@ -54,9 +53,8 @@ pub fn get_branches() -> Result<Vec<BranchInfo>, String> {
     let mut branch_list = Vec::new();
 
     for branch in branches {
-        let (branch, _) = branch.map_err(|e| format!("Error reading branch: {}", e))?;
-        let name = branch.name()
-            .map_err(|e| format!("Error getting branch name: {}", e))?
+        let (branch, _) = branch?;
+        let name = branch.name()?
             .unwrap_or("Unnamed branch")
             .to_string();
         let upstream = branch.upstream().is_ok();
@@ -82,10 +80,8 @@ fn fetch_with_prune(repo: &Repository) -> Result<(), git2::Error> {
     Ok(())
 }
 
-pub fn get_repository() -> Result<Repository, String> {
-    Repository::discover(".").map_err(|e| {
-        format!("Failed to open repository: {}", e)
-    })
+pub fn get_repository() -> Result<Repository, git2::Error> {
+    Repository::discover(".")
 }
 
 pub fn get_untracked(repo: &Repository) -> Vec<Change> {
@@ -135,60 +131,56 @@ pub fn push_to_origin() -> Result<(), String> {
     let output = Command::new("git")
         .arg("push")
         .arg("origin")
-        .arg("HEAD") 
+        .arg("HEAD")
         .output()
-        .expect("Failed to execute git push command");
+        .map_err(|e| format!("Failed to execute git push command: {}", e))?;
 
     if !output.status.success() {
         let error_message = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("{}", error_message));
+        return Err(format!("❌ Push failed: {}", error_message));
     }
 
     Ok(())
 }
 
-pub fn commit_and_push(repo: git2::Repository, mut index: git2::Index, message: String) -> Result<(), String> {
-    let signature = repo.signature().map_err(|e| e.to_string())?;
-    let tree_oid = index.write_tree().map_err(|e| e.to_string())?;
-    let tree = repo.find_tree(tree_oid).map_err(|e| e.to_string())?;
+pub fn commit_and_push(repo: git2::Repository, mut index: git2::Index, message: String) -> Result<(), git2::Error> {
+    let signature = repo.signature()?;
+    let tree_oid = index.write_tree()?;
+    let tree = repo.find_tree(tree_oid)?;
     let parent_commits: Vec<git2::Commit> = repo.head()
         .ok()
         .and_then(|head| head.peel_to_commit().ok().map(|c| vec![c]))
         .unwrap_or_default(); 
     let parent_refs: Vec<&git2::Commit> = parent_commits.iter().collect();
-    repo.commit(Some("HEAD"), &signature,&signature, &message,&tree,&parent_refs)
-    .map_err(|e|format!("❌ Commit failed: {}", e))?;
-    push_to_origin()?;
+    repo.commit(Some("HEAD"), &signature,&signature, &message,&tree,&parent_refs)?;
+    push_to_origin().map_err(|e| git2::Error::from_str(&e))?;
     Ok(())
 }
 
-pub fn checkout_branch(branch: &str) -> Result<(), String>  {
+pub fn checkout_branch(branch: &str) -> Result<(), git2::Error>  {
     let repo = get_repository()?;
 
     let (object, reference) = repo
-        .revparse_ext(branch)
-        .map_err(|e| format!("Failed to find branch: {}", e))?;
+        .revparse_ext(branch)?;
 
-    repo.checkout_tree(&object, None)
-        .map_err(|e| format!("Failed to checkout tree: {}", e))?;
+    repo.checkout_tree(&object, None)?;
 
     if let Some(reference) = reference {
-        repo.set_head(reference.name().ok_or("Invalid branch reference")?)
-            .map_err(|e| format!("Failed to set HEAD: {}", e))?;
+        let reference_name = reference.name()
+            .ok_or_else(|| git2::Error::from_str("Invalid branch reference"))?;
+        repo.set_head(reference_name)?;
     } else {
-        repo.set_head_detached(object.id())
-            .map_err(|e| format!("Failed to set HEAD detached: {}", e))?;
+        repo.set_head_detached(object.id())?;
     }
     
     Ok(())
 }
 
-pub fn get_current_branch() -> Result<String, String> {
+pub fn get_current_branch() -> Result<String, git2::Error> {
     let repo = get_repository()?;
 
-    let head = repo.head().map_err(|e| format!("Failed to get HEAD: {}", e))?;
-
+    let head = repo.head()?;
     head.shorthand()
     .map(|s| s.to_string())
-    .ok_or_else(|| "Failed to get branch name".to_string())
+    .ok_or_else(|| git2::Error::from_str("Failed to get branch name"))
 }
