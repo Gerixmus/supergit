@@ -84,7 +84,7 @@ pub fn get_repository() -> Result<Repository, git2::Error> {
     Repository::discover(".")
 }
 
-pub fn get_untracked(repo: &Repository) -> Vec<Change> {
+pub fn get_changes(repo: &Repository) -> (Vec<Change>, Vec<Change>) {
     let mut status_opts = StatusOptions::new();
     status_opts.include_untracked(true);
 
@@ -92,25 +92,28 @@ pub fn get_untracked(repo: &Repository) -> Vec<Change> {
         Ok(statuses) => statuses,
         Err(err) => {
             println!("Error fetching statuses: {}", err);
-            return Vec::new();
+            return (Vec::new(), Vec::new());
         }
     };
 
-    let mut changes= Vec::new();
+    let mut untracked = Vec::new();
+    let mut staged = Vec::new();
+
     for entry in statuses.iter() {
-        let status = entry.status();
-        if status.intersects(Status::WT_NEW | Status::WT_MODIFIED | Status::WT_DELETED) {
-            if let Some(path) = entry.path() {
-                let path = path.to_string();
-                changes.push(Change {
-                    path,
-                    status
-                });
+        if let Some(path) = entry.path() {
+            let path = path.to_string();
+            let status = entry.status();
+
+            if status.intersects(Status::WT_NEW | Status::WT_MODIFIED | Status::WT_DELETED) {
+                untracked.push(Change { path: path.clone(), status });
+            }
+            if status.intersects(Status::INDEX_NEW | Status::INDEX_MODIFIED | Status::INDEX_DELETED) {
+                staged.push(Change { path, status });
             }
         }
     }
 
-    changes
+    (untracked, staged)
 }
 
 pub fn add_files(selected_files: Vec<Change>, index: &mut git2::Index) -> Result<(), git2::Error>{

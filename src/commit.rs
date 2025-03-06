@@ -26,23 +26,30 @@ fn get_type() -> Result<String, String> {
 pub fn run_commit(conventional_commit: bool, ticket_prefix: bool) -> Result<(), String> {
     let repo = git_operations::get_repository().map_err(|e| e.to_string())?;
 
-    let changes = git_operations::get_untracked(&repo);
-        
-    if changes.is_empty() {
+    let (changes, staged) = git_operations::get_changes(&repo);
+
+    if changes.is_empty() && staged.is_empty() {
         println!("No untracked or modified files found.");
         return Ok(());
     }
-    let selected_files = MultiSelect::new("Select changes to commit:", changes)
-        .prompt()
-        .map_err(|e| format!("An error occurred during selection: {}", e))?;
 
-    if selected_files.is_empty() {
-        println!("No files selected.");
-        return Ok(());
+    let mut selected_files = staged;
+
+    if !changes.is_empty() {
+        let selected_unstaged = MultiSelect::new("Select changes to commit:", changes)
+            .prompt()
+            .map_err(|e| format!("An error occurred during selection: {}", e))?;
+
+        if selected_unstaged.is_empty() && selected_files.is_empty() {
+            println!("No files selected.");
+            return Ok(());
+        }
+
+        selected_files.extend(selected_unstaged);
     }
 
     let mut index = repo.index().map_err(|e| format!("Error accessing index: {}", e))?;
-        
+
     let commit_type = if conventional_commit {
         let selected_type = get_type().map_err(|e| format!("An error occurred: {}", e))?;
         format!("{}: ", selected_type)
