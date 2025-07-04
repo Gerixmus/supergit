@@ -2,39 +2,44 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
 
 env:
   CARGO_TERM_COLOR: always
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
     release:
-        name: Release pushed tag
         runs-on: ubuntu-latest
-    
         steps:
-          - name: Check out the code
+          - name: Checkout code
             uses: actions/checkout@v4
-    
+
+          - uses: googleapis/release-please-action@v4
+            with:
+              token: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}
+              config-file: .release-please-config.json
+              manifest-file: .release-please-manifest.json
+
           - name: Install cross for cross-compilation
+            if: ${{ steps.release.outputs.releases_created }}
             run: cargo install cross
-    
+
           - name: Build Windows executable
+            if: ${{ steps.release.outputs.releases_created }}
             run: cross build --target x86_64-pc-windows-gnu --release
-    
-          - name: Create release
+
+          - name: Create GitHub Release
+            if: ${{ steps.release.outputs.releases_created }}
             env:
               GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               tag: ${{ github.ref_name }}
             run: |
-              gh release create "$tag" \
-                  --repo="$GITHUB_REPOSITORY" \
-                  --title="${GITHUB_REPOSITORY#*/} ${tag#v}" \
-                  --generate-notes \
-                  target/x86_64-pc-windows-gnu/release/*.exe
-        
+              gh release upload "$tag" \
+                --repo="$GITHUB_REPOSITORY" \
+                target/x86_64-pc-windows-gnu/release/*.exe
     
