@@ -20,7 +20,7 @@ impl Config {
 }
 
 fn get_config_path() -> PathBuf {
-    let proj_dirs  = ProjectDirs::from("", "", "cmt")
+    let proj_dirs  = ProjectDirs::from("", "", "sg")
         .expect("Failed to get project directory");
 
     let directory = proj_dirs.config_dir();
