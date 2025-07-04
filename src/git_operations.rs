@@ -1,7 +1,7 @@
 use core::fmt;
-use std::{path::Path, process::Command};
+use std::{path::Path};
 use colored::Colorize;
-use git2::{FetchOptions, FetchPrune, Repository, Status, StatusOptions};
+use git2::{FetchOptions, FetchPrune, Repository, Status, StatusOptions, PushOptions, RemoteCallbacks, Cred};
 
 #[derive(Clone)]
 pub struct Change {
@@ -130,18 +130,23 @@ pub fn add_files(selected_files: Vec<Change>, index: &mut git2::Index) -> Result
     Ok(())
 }
 
-pub fn push_to_origin() -> Result<(), String> {
-    let output = Command::new("git")
-        .arg("push")
-        .arg("origin")
-        .arg("HEAD")
-        .output()
-        .map_err(|e| format!("Failed to execute git push command: {}", e))?;
+pub fn push_to_origin(repo: &Repository) -> Result<(), git2::Error> {
+    let mut remote = repo.find_remote("origin")
+        .or_else(|_| repo.remote_anonymous("origin"))?;
 
-    if !output.status.success() {
-        let error_message = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("❌ Push failed: {}", error_message));
-    }
+    let mut callbacks = RemoteCallbacks::new();
+    callbacks.credentials(|_url, username_from_url, _allowed_types| {
+        Cred::ssh_key_from_agent(username_from_url.unwrap_or("git"))
+    });
+
+    let mut push_options = PushOptions::new();
+    push_options.remote_callbacks(callbacks);
+
+    let head_ref = repo.head()?;
+    let branch = head_ref.shorthand().ok_or_else(|| git2::Error::from_str("Failed to get current branch name"))?;
+    let refspec = format!("refs/heads/{}:refs/heads/{}", branch, branch);
+
+    remote.push(&[&refspec], Some(&mut push_options))?;
 
     Ok(())
 }
@@ -156,7 +161,7 @@ pub fn commit_and_push(repo: git2::Repository, mut index: git2::Index, message: 
         .unwrap_or_default(); 
     let parent_refs: Vec<&git2::Commit> = parent_commits.iter().collect();
     repo.commit(Some("HEAD"), &signature,&signature, &message,&tree,&parent_refs)?;
-    push_to_origin().map_err(|e| git2::Error::from_str(&e))?;
+    push_to_origin(&repo)?;
     Ok(())
 }
 
