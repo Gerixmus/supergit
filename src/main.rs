@@ -7,7 +7,7 @@ mod checkout;
 mod config;
 
 #[derive(Parser)]
-#[command(name = "cmt", version = "1.0", about = "Commit management tool")]
+#[command(name = "sg", version = env!("CARGO_PKG_VERSION"), about = "SuperGit: Simplify your git workflow")]
 struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,
