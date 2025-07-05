@@ -16,10 +16,12 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     Commit,
-    Checkout,
     Branch,
     Ignore,
-    Config
+    Config,
+    Checkout {
+        new_branch: Option<String>,
+    },
 }
 
 fn main() {
@@ -28,7 +30,7 @@ fn main() {
     let result = match &cli.command {
         Some(Commands::Commit) => commit::run_commit(config.conventional_commits, config.ticket_prefix),
         Some(Commands::Branch) => branch::run_branch(),
-        Some(Commands::Checkout) => checkout::run_checkout(),
+        Some(Commands::Checkout { new_branch }) => checkout::run_checkout(new_branch.clone()),
         Some(Commands::Ignore) => {
             println!("Ignore logic to implement later");
             Ok(())
