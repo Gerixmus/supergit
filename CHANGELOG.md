@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/Gerixmus/sg/compare/v0.1.2...v0.1.3) (2025-07-05)
+
+
+### Bug Fixes
+
+* correct argument for branch command ([#17](https://github.com/Gerixmus/sg/issues/17)) ([bb899c7](https://github.com/Gerixmus/sg/commit/bb899c71d949ef3307bf7e742b1ce0ff03181b3d))
+
 ## [0.1.2](https://github.com/Gerixmus/sg/compare/v0.1.1...v0.1.2) (2025-07-05)
 
 
