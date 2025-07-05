@@ -38,7 +38,7 @@ jobs:
             if: ${{ steps.release.outputs.release_created }}
             env:
               GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              tag: ${{ github.ref_name }}
+              tag: ${{ steps.release.outputs.tag_name }}
             run: |
               gh release upload "$tag" \
                 --repo="$GITHUB_REPOSITORY" \
