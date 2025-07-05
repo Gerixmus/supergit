@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/Gerixmus/sg/compare/v0.1.3...v0.1.4) (2025-07-05)
+
+
+### Bug Fixes
+
+* ssh agent callback missing ([#20](https://github.com/Gerixmus/sg/issues/20)) ([e7fee7c](https://github.com/Gerixmus/sg/commit/e7fee7c94a1492a78674b2cd0b9954f297ad3856))
+
 ## [0.1.3](https://github.com/Gerixmus/sg/compare/v0.1.2...v0.1.3) (2025-07-05)
 
 
