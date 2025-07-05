@@ -192,3 +192,22 @@ pub fn get_current_branch() -> Result<String, git2::Error> {
     .map(|s| s.to_string())
     .ok_or_else(|| git2::Error::from_str("Failed to get branch name"))
 }
+
+pub fn create_and_checkout_branch(branch_name: &str) -> Result<(), git2::Error> {
+    let repo = get_repository()?;
+
+    let head_ref = repo.head()?;
+    let target_commit = head_ref.peel_to_commit()?;
+
+    let branch = repo.branch(branch_name, &target_commit, false)?;
+
+    let branch_ref = branch.get().name()
+        .ok_or_else(|| git2::Error::from_str("Invalid branch reference name"))?;
+
+    let obj = repo.revparse_single(branch_ref)?;
+
+    repo.checkout_tree(&obj, None)?;
+    repo.set_head(branch_ref)?;
+
+    Ok(())
+}
