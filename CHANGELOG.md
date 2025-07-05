@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/Gerixmus/sg/compare/v0.1.1...v0.1.2) (2025-07-05)
+
+
+### Features
+
+* create branch and checkout ([#15](https://github.com/Gerixmus/sg/issues/15)) ([e5b7159](https://github.com/Gerixmus/sg/commit/e5b7159512e7cfb4ae5605f5ca28f3f8b1f5b890))
+
 ## [0.1.1](https://github.com/Gerixmus/sg/compare/v0.1.0...v0.1.1) (2025-07-05)
 
 
