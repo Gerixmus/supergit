@@ -6,7 +6,7 @@ const BRANCH_TYPES: [&str; 5] = ["feature", "bugfix", "hotfix", "release", "chor
 
 pub fn run_checkout(new_branch: Option<String>) -> Result<(), String> {
     if let Some(ref branch_flag) = new_branch {
-         if branch_flag == "-b" {
+         if branch_flag == "b" {
             let branch_type = Select::new("Select branch type", BRANCH_TYPES.to_vec())
                 .prompt()
                 .map_err(|e| format!("Prompt error: {}", e))?;
