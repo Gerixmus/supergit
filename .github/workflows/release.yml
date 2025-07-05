@@ -26,15 +26,15 @@ jobs:
               manifest-file: .release-please-manifest.json
 
           - name: Install cross for cross-compilation
-            if: ${{ steps.release.outputs.releases_created }}
+            if: ${{ steps.release.outputs.release_created }}
             run: cargo install cross
 
           - name: Build Windows executable
-            if: ${{ steps.release.outputs.releases_created }}
+            if: ${{ steps.release.outputs.release_created }}
             run: cross build --target x86_64-pc-windows-gnu --release
 
           - name: Create GitHub Release
-            if: ${{ steps.release.outputs.releases_created }}
+            if: ${{ steps.release.outputs.release_created }}
             env:
               GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               tag: ${{ github.ref_name }}
