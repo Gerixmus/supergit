@@ -72,11 +72,17 @@ pub fn get_branches() -> Result<Vec<BranchInfo>, git2::Error> {
 fn fetch_with_prune(repo: &Repository) -> Result<(), git2::Error> {
     let mut remote = repo.find_remote("origin")?;
 
+    let mut callbacks = RemoteCallbacks::new();
+    callbacks.credentials(|_url, username_from_url, _allowed_types| {
+        Cred::ssh_key_from_agent(username_from_url.unwrap_or("git"))
+    });
+
     let mut fetch_options = FetchOptions::new();
     fetch_options.prune(FetchPrune::On);
+    fetch_options.remote_callbacks(callbacks);
 
     remote.fetch(&["refs/heads/*:refs/remotes/origin/*"], Some(&mut fetch_options), None)?;
-    
+
     Ok(())
 }
 
