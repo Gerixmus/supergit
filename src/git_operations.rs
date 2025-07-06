@@ -167,7 +167,15 @@ pub fn commit_and_push(repo: git2::Repository, mut index: git2::Index, message: 
         .unwrap_or_default(); 
     let parent_refs: Vec<&git2::Commit> = parent_commits.iter().collect();
     repo.commit(Some("HEAD"), &signature,&signature, &message,&tree,&parent_refs)?;
-    push_to_origin(&repo)?;
+
+    let binding = repo.find_remote("origin")?;
+    let remote_url = binding.url().unwrap_or_default();
+    if remote_url.starts_with("git@") || remote_url.starts_with("ssh://") {
+        push_to_origin(&repo)?;
+    } else {
+        println!("Remote is HTTP(S). Commit created, but push skipped.")
+    }
+
     Ok(())
 }
 
