@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.5](https://github.com/Gerixmus/sg/compare/v0.1.4...v0.1.5) (2025-07-10)
+
+
+### Bug Fixes
+
+* message for http push ([#22](https://github.com/Gerixmus/sg/issues/22)) ([e5d38ab](https://github.com/Gerixmus/sg/commit/e5d38ab90d13496b6a07119d0e86f2eb781b5f55))
+
 ## [0.1.4](https://github.com/Gerixmus/sg/compare/v0.1.3...v0.1.4) (2025-07-05)
 
 
