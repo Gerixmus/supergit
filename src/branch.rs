@@ -1,11 +1,15 @@
-use crate::git_operations;
+use std::process::Command;
 
 pub fn run_branch() -> Result<(), String> {
-    let branches = git_operations::get_branches().map_err(|e| e.to_string())?;
+    let status = Command::new("git")
+        .arg("--no-pager")
+        .arg("branch")
+        .status()
+        .map_err(|e| e.to_string())?;
 
-    for branch in &branches {
-        println!("{}", branch);
+    if status.success() {
+        Ok(())
+    } else {
+        Err("git branch command failed".to_string())
     }
-
-    Ok(())
 }
