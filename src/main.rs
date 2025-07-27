@@ -20,6 +20,7 @@ enum Commands {
     Ignore,
     Config,
     Checkout {
+        #[arg(short = 'b', long = "branch", value_name = "BRANCH")] 
         new_branch: Option<String>,
     },
 }
