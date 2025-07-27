@@ -61,7 +61,7 @@ pub fn run_commit(conventional_commit: bool, ticket_prefix: bool) -> Result<(), 
         let re = Regex::new(r"[A-Z]+-[0-9]+").unwrap();
         let branch = git_operations::get_current_branch().unwrap();
         re.find(&branch)
-            .map(|regex_match| format!("({}) ", regex_match.as_str()))
+            .map(|regex_match| format!(" ({})", regex_match.as_str()))
             .unwrap_or_else(|| "".to_string())
     } else {
         "".to_string()
@@ -69,7 +69,7 @@ pub fn run_commit(conventional_commit: bool, ticket_prefix: bool) -> Result<(), 
 
     let user_input = Text::new("Enter commit message:").prompt()
         .map_err(|e| format!("An error occurred: {}", e))?;
-    let message = format!("{}{}{}", ticket, commit_type, user_input);
+    let message = format!("{}{}{}", commit_type, user_input, ticket);
 
     let should_commit = Confirm::new(&format!("Commit with message: \"{}\"?", message))
         .with_default(true)
