@@ -1,5 +1,5 @@
 use core::fmt;
-use std::{path::Path};
+use std::{path::Path, process::Command};
 use colored::Colorize;
 use git2::{FetchOptions, FetchPrune, Repository, Status, StatusOptions, PushOptions, RemoteCallbacks, Cred};
 
@@ -168,15 +168,31 @@ pub fn commit_and_push(repo: git2::Repository, mut index: git2::Index, message: 
     let parent_refs: Vec<&git2::Commit> = parent_commits.iter().collect();
     repo.commit(Some("HEAD"), &signature,&signature, &message,&tree,&parent_refs)?;
 
-    let binding = repo.find_remote("origin")?;
-    let remote_url = binding.url().unwrap_or_default();
-    if remote_url.starts_with("git@") || remote_url.starts_with("ssh://") {
-        push_to_origin(&repo)?;
-    } else {
-        println!("Remote is HTTP(S). Commit created, but push skipped.")
-    }
+    // let binding = repo.find_remote("origin")?;
+    // let remote_url = binding.url().unwrap_or_default();
+    // if remote_url.starts_with("git@") || remote_url.starts_with("ssh://") {
+    //     push_to_origin(&repo)?;
+    // } else {
+    //     println!("Remote is HTTP(S). Commit created, but push skipped.")
+    // }
+    push_with_git_cli(repo.path()).map_err(|e| git2::Error::from_str(&format!("Git CLI push failed: {}", e)))?;
 
     Ok(())
+}
+
+fn push_with_git_cli(repo_path: &Path) -> Result<(), std::io::Error> {
+    let status = Command::new("git")
+        .arg("push")
+        .arg("origin")
+        .arg("HEAD")
+        .current_dir(repo_path)
+        .status()?;
+
+    if status.success() {
+        Ok(())
+    } else {
+        Err(std::io::Error::new(std::io::ErrorKind::Other, "git push failed"))
+    }
 }
 
 pub fn checkout_branch(branch: &str) -> Result<(), git2::Error>  {
