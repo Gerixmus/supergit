@@ -1,7 +1,7 @@
 use core::fmt;
 use std::{path::Path, process::Command};
 use colored::Colorize;
-use git2::{FetchOptions, FetchPrune, Repository, Status, StatusOptions, RemoteCallbacks, Cred};
+use git2::{Repository, Status, StatusOptions};
 
 #[derive(Clone)]
 pub struct Change {
@@ -42,7 +42,7 @@ impl fmt::Display for BranchInfo {
 
 pub fn get_branches() -> Result<Vec<BranchInfo>, git2::Error> {
     let repo = get_repository()?;
-    if let Err(e) = fetch_with_prune(&repo) {
+    if let Err(e) = fetch_with_prune() {
         eprintln!("Fetch failed: {}", e);
     }
     let branches = repo.branches(Some(git2::BranchType::Local))?;
@@ -69,21 +69,17 @@ pub fn get_branches() -> Result<Vec<BranchInfo>, git2::Error> {
     Ok(branch_list)
 }
 
-fn fetch_with_prune(repo: &Repository) -> Result<(), git2::Error> {
-    let mut remote = repo.find_remote("origin")?;
+fn fetch_with_prune() -> Result<(), std::io::Error> {
+    let status = Command::new("git")
+        .arg("fetch")
+        .arg("--prune")
+        .status()?;
 
-    let mut callbacks = RemoteCallbacks::new();
-    callbacks.credentials(|_url, username_from_url, _allowed_types| {
-        Cred::ssh_key_from_agent(username_from_url.unwrap_or("git"))
-    });
-
-    let mut fetch_options = FetchOptions::new();
-    fetch_options.prune(FetchPrune::On);
-    fetch_options.remote_callbacks(callbacks);
-
-    remote.fetch(&["refs/heads/*:refs/remotes/origin/*"], Some(&mut fetch_options), None)?;
-
-    Ok(())
+    if status.success() {
+        Ok(())
+    } else {
+        Err(std::io::Error::new(std::io::ErrorKind::Other, "git fetch with prune failed"))
+    }
 }
 
 pub fn get_repository() -> Result<Repository, git2::Error> {
