@@ -20,7 +20,8 @@ enum Commands {
     Ignore,
     Config,
     Checkout {
-        new_branch: Option<String>,
+        #[arg(short = 'b', long = "branch", help = "Create a new branch")] 
+        create_new: bool,
     },
 }
 
@@ -30,7 +31,7 @@ fn main() {
     let result = match &cli.command {
         Some(Commands::Commit) => commit::run_commit(config.conventional_commits, config.ticket_prefix),
         Some(Commands::Branch) => branch::run_branch(),
-        Some(Commands::Checkout { new_branch }) => checkout::run_checkout(new_branch.clone()),
+        Some(Commands::Checkout { create_new }) => checkout::run_checkout(create_new.clone()),
         Some(Commands::Ignore) => {
             println!("Ignore logic to implement later");
             Ok(())

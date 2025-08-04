@@ -1,7 +1,7 @@
 use core::fmt;
-use std::{path::Path};
+use std::{path::Path, process::Command};
 use colored::Colorize;
-use git2::{FetchOptions, FetchPrune, Repository, Status, StatusOptions, PushOptions, RemoteCallbacks, Cred};
+use git2::{Repository, Status, StatusOptions};
 
 #[derive(Clone)]
 pub struct Change {
@@ -42,7 +42,7 @@ impl fmt::Display for BranchInfo {
 
 pub fn get_branches() -> Result<Vec<BranchInfo>, git2::Error> {
     let repo = get_repository()?;
-    if let Err(e) = fetch_with_prune(&repo) {
+    if let Err(e) = fetch_with_prune() {
         eprintln!("Fetch failed: {}", e);
     }
     let branches = repo.branches(Some(git2::BranchType::Local))?;
@@ -69,21 +69,17 @@ pub fn get_branches() -> Result<Vec<BranchInfo>, git2::Error> {
     Ok(branch_list)
 }
 
-fn fetch_with_prune(repo: &Repository) -> Result<(), git2::Error> {
-    let mut remote = repo.find_remote("origin")?;
+fn fetch_with_prune() -> Result<(), std::io::Error> {
+    let status = Command::new("git")
+        .arg("fetch")
+        .arg("--prune")
+        .status()?;
 
-    let mut callbacks = RemoteCallbacks::new();
-    callbacks.credentials(|_url, username_from_url, _allowed_types| {
-        Cred::ssh_key_from_agent(username_from_url.unwrap_or("git"))
-    });
-
-    let mut fetch_options = FetchOptions::new();
-    fetch_options.prune(FetchPrune::On);
-    fetch_options.remote_callbacks(callbacks);
-
-    remote.fetch(&["refs/heads/*:refs/remotes/origin/*"], Some(&mut fetch_options), None)?;
-
-    Ok(())
+    if status.success() {
+        Ok(())
+    } else {
+        Err(std::io::Error::new(std::io::ErrorKind::Other, "git fetch with prune failed"))
+    }
 }
 
 pub fn get_repository() -> Result<Repository, git2::Error> {
@@ -136,27 +132,6 @@ pub fn add_files(selected_files: Vec<Change>, index: &mut git2::Index) -> Result
     Ok(())
 }
 
-pub fn push_to_origin(repo: &Repository) -> Result<(), git2::Error> {
-    let mut remote = repo.find_remote("origin")
-        .or_else(|_| repo.remote_anonymous("origin"))?;
-
-    let mut callbacks = RemoteCallbacks::new();
-    callbacks.credentials(|_url, username_from_url, _allowed_types| {
-        Cred::ssh_key_from_agent(username_from_url.unwrap_or("git"))
-    });
-
-    let mut push_options = PushOptions::new();
-    push_options.remote_callbacks(callbacks);
-
-    let head_ref = repo.head()?;
-    let branch = head_ref.shorthand().ok_or_else(|| git2::Error::from_str("Failed to get current branch name"))?;
-    let refspec = format!("refs/heads/{}:refs/heads/{}", branch, branch);
-
-    remote.push(&[&refspec], Some(&mut push_options))?;
-
-    Ok(())
-}
-
 pub fn commit_and_push(repo: git2::Repository, mut index: git2::Index, message: String) -> Result<(), git2::Error> {
     let signature = repo.signature()?;
     let tree_oid = index.write_tree()?;
@@ -168,15 +143,24 @@ pub fn commit_and_push(repo: git2::Repository, mut index: git2::Index, message: 
     let parent_refs: Vec<&git2::Commit> = parent_commits.iter().collect();
     repo.commit(Some("HEAD"), &signature,&signature, &message,&tree,&parent_refs)?;
 
-    let binding = repo.find_remote("origin")?;
-    let remote_url = binding.url().unwrap_or_default();
-    if remote_url.starts_with("git@") || remote_url.starts_with("ssh://") {
-        push_to_origin(&repo)?;
-    } else {
-        println!("Remote is HTTP(S). Commit created, but push skipped.")
-    }
+    push_with_git_cli(repo.path()).map_err(|e| git2::Error::from_str(&format!("Git CLI push failed: {}", e)))?;
 
     Ok(())
+}
+
+fn push_with_git_cli(repo_path: &Path) -> Result<(), std::io::Error> {
+    let status = Command::new("git")
+        .arg("push")
+        .arg("origin")
+        .arg("HEAD")
+        .current_dir(repo_path)
+        .status()?;
+
+    if status.success() {
+        Ok(())
+    } else {
+        Err(std::io::Error::new(std::io::ErrorKind::Other, "git push failed"))
+    }
 }
 
 pub fn checkout_branch(branch: &str) -> Result<(), git2::Error>  {
