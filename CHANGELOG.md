@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.6](https://github.com/Gerixmus/sg/compare/v0.1.5...v0.1.6) (2025-08-04)
+
+
+### Features
+
+* remove ssh functionality ([#25](https://github.com/Gerixmus/sg/issues/25)) ([f660eac](https://github.com/Gerixmus/sg/commit/f660eacf1aae898a3790fc84d84e38e7fbca3c6f))
+
 ## [0.1.5](https://github.com/Gerixmus/sg/compare/v0.1.4...v0.1.5) (2025-07-10)
 
 
