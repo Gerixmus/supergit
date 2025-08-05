@@ -89,6 +89,7 @@ pub fn get_repository() -> Result<Repository, git2::Error> {
 pub fn get_changes(repo: &Repository) -> (Vec<Change>, Vec<Change>) {
     let mut status_opts = StatusOptions::new();
     status_opts.include_untracked(true);
+    status_opts.recurse_untracked_dirs(true);
 
     let statuses = match repo.statuses(Some(&mut status_opts)) {
         Ok(statuses) => statuses,
@@ -104,8 +105,7 @@ pub fn get_changes(repo: &Repository) -> (Vec<Change>, Vec<Change>) {
     for entry in statuses.iter() {
         if let Some(path) = entry.path() {
             let path = path.to_string();
-            let status = entry.status();
-
+            let status = entry.status();            
             if status.intersects(Status::WT_NEW | Status::WT_MODIFIED | Status::WT_DELETED) {
                 untracked.push(Change { path: path.clone(), status });
             }
