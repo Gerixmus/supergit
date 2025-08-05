@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.7](https://github.com/Gerixmus/sg/compare/v0.1.6...v0.1.7) (2025-08-05)
+
+
+### Bug Fixes
+
+* add recurse untracked dirs option ([#29](https://github.com/Gerixmus/sg/issues/29)) ([c91bd51](https://github.com/Gerixmus/sg/commit/c91bd51ab73a06bffc343661982c2c493c184efc))
+
 ## [0.1.6](https://github.com/Gerixmus/sg/compare/v0.1.5...v0.1.6) (2025-08-04)
 
 
