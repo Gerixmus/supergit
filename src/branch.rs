@@ -1,15 +1,19 @@
-use std::process::Command;
+use std::{process::Command};
 
-pub fn run_branch() -> Result<(), String> {
-    let status = Command::new("git")
+pub fn run_branch(delete: bool) -> Result<(), String> {
+    let output = Command::new("git")
         .arg("--no-pager")
         .arg("branch")
-        .status()
+        .output()
         .map_err(|e| e.to_string())?;
 
-    if status.success() {
+    let output_str  = String::from_utf8(output.stdout).map_err(|e| e.to_string())?;
+    let branches: Vec<String> = output_str .lines().map(|branch| branch.to_owned()).collect();
+    
+    if delete {      
         Ok(())
     } else {
-        Err("git branch command failed".to_string())
+        branches.iter().for_each(|branch| println!("{branch}"));
+        Ok(())
     }
 }
