@@ -1,4 +1,5 @@
 use inquire::{Confirm, Select};
+use regex::Regex;
 
 use crate::{git_operations};
 
@@ -10,9 +11,12 @@ pub fn run_checkout(create_new: bool) -> Result<(), String> {
             .prompt()
             .map_err(|e| format!("Prompt error: {}", e))?;
 
-        let branch_name = inquire::Text::new("Enter branch name")
+        let branch_input = inquire::Text::new("Enter branch name")
             .prompt()
             .map_err(|e| format!("Prompt error: {}", e))?;
+
+        let re = Regex::new(r" +").unwrap();
+        let branch_name = re.replace_all(branch_input.trim(), "-");
 
         let full_branch = format!("{}/{}", branch_type, branch_name);
 
