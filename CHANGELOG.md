@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.8](https://github.com/Gerixmus/supergit/compare/v0.1.7...v0.1.8) (2025-08-06)
+
+
+### Features
+
+* replace spaces with hyphens ([#31](https://github.com/Gerixmus/supergit/issues/31)) ([c37b5a5](https://github.com/Gerixmus/supergit/commit/c37b5a58480d4663b8ab843ff6497a7fa64f05b3))
+
 ## [0.1.7](https://github.com/Gerixmus/sg/compare/v0.1.6...v0.1.7) (2025-08-05)
 
 
