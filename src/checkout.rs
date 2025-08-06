@@ -32,7 +32,7 @@ pub fn run_checkout(create_new: bool) -> Result<(), String> {
             println!("❌ Commit canceled or failed to get user confirmation.");
         }
         return Ok(());
-    } else  {
+    } else {
         let branches = git_operations::get_branches().map_err(|e| e.to_string())?;
         let available_branches: Vec<&git_operations::BranchInfo> = branches
             .iter()
