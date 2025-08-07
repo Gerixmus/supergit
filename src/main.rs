@@ -4,7 +4,7 @@ mod git_operations;
 mod commit;
 mod branch;
 mod checkout;
-mod config;
+mod init;
 
 #[derive(Parser)]
 #[command(name = "sg", version = env!("CARGO_PKG_VERSION"), about = "SuperGit: Simplify your git workflow")]
@@ -23,7 +23,7 @@ enum Commands {
         force_delete: bool,
     },
     Ignore,
-    Config,
+    Init,
     Checkout {
         #[arg(short = 'b', long = "branch", help = "Create a new branch")] 
         create_new: bool,
@@ -32,16 +32,16 @@ enum Commands {
 
 fn main() {
     let cli = Cli::parse();
-    let config = config::load_config();
+    let config = init::load_config();
     let result = match &cli.command {
         Some(Commands::Commit) => commit::run_commit(config.conventional_commits, config.ticket_prefix),
         Some(Commands::Branch { delete , force_delete})=> branch::run_branch(delete.clone(), force_delete.clone()),
-        Some(Commands::Checkout { create_new }) => checkout::run_checkout(create_new.clone()),
+        Some(Commands::Checkout { create_new }) => checkout::run_checkout(config.conventional_branches, create_new.clone()),
         Some(Commands::Ignore) => {
             println!("Ignore logic to implement later");
             Ok(())
         }
-        Some(Commands::Config) => config::run_config(),
+        Some(Commands::Init) => init::run_config(),
         None => {
             println!("Default logic to implement later");
             Ok(())

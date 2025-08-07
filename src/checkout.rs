@@ -5,11 +5,16 @@ use crate::{git_operations};
 
 const BRANCH_TYPES: [&str; 5] = ["feature", "bugfix", "hotfix", "release", "chore"];
 
-pub fn run_checkout(create_new: bool) -> Result<(), String> {
+pub fn run_checkout(conventional_branches: bool, create_new: bool) -> Result<(), String> {
     if create_new {
-        let branch_type = Select::new("Select branch type", BRANCH_TYPES.to_vec())
-            .prompt()
-            .map_err(|e| format!("Prompt error: {}", e))?;
+        let branch_type = if conventional_branches {
+            let selected_type = Select::new("Select branch type", BRANCH_TYPES.to_vec())
+                .prompt()
+                .map_err(|e| format!("Prompt error: {}", e))?;
+            format!("{}/", selected_type)
+        } else {
+            "".to_string()
+        };
 
         let branch_input = inquire::Text::new("Enter branch name")
             .prompt()
@@ -18,7 +23,7 @@ pub fn run_checkout(create_new: bool) -> Result<(), String> {
         let re = Regex::new(r" +").unwrap();
         let branch_name = re.replace_all(branch_input.trim(), "-");
 
-        let full_branch = format!("{}/{}", branch_type, branch_name);
+        let full_branch = format!("{}{}", branch_type, branch_name);
 
         let should_checkout = Confirm::new(&format!("Create and checkout to: \"{}\"?", full_branch))
             .with_default(true)
