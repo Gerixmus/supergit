@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Deserialize, Serialize)]
 pub struct Config {
     pub conventional_commits: bool,
+    pub conventional_branches: bool,
     pub ticket_prefix: bool
 }
 
@@ -14,13 +15,14 @@ impl Config {
     pub fn default() -> Self {
         Config {
             conventional_commits: false,
+            conventional_branches: false,
             ticket_prefix: false
         }
     }
 }
 
 fn get_config_path() -> PathBuf {
-    let proj_dirs  = ProjectDirs::from("", "", "sg")
+    let proj_dirs  = ProjectDirs::from("", "", "supergit")
         .expect("Failed to get project directory");
 
     let directory = proj_dirs.config_dir();
@@ -57,6 +59,7 @@ fn save_config(config: &Config, config_path: &PathBuf) -> io::Result<()> {
 fn create_config() -> Config {
     let settings = vec![
         "conventional_commits",
+        "conventional_branches",
         "ticket_prefix"
     ];
 
@@ -66,6 +69,7 @@ fn create_config() -> Config {
 
     Config {
         conventional_commits: selected_options.contains(&"conventional_commits"),
+        conventional_branches: selected_options.contains(&"conventional_branches"),
         ticket_prefix: selected_options.contains(&"ticket_prefix")
     }
 }
