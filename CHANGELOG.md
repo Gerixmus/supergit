@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.9](https://github.com/Gerixmus/supergit/compare/v0.1.8...v0.1.9) (2025-08-07)
+
+
+### Features
+
+* add delete branch command ([#33](https://github.com/Gerixmus/supergit/issues/33)) ([f524325](https://github.com/Gerixmus/supergit/commit/f524325b61a4148104529dd46799862d3c7e0c97))
+
 ## [0.1.8](https://github.com/Gerixmus/supergit/compare/v0.1.7...v0.1.8) (2025-08-06)
 
 
