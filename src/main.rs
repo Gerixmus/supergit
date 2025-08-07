@@ -16,7 +16,12 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     Commit,
-    Branch,
+    Branch {
+        #[arg(short = 'd', long = "delete", help = "Delete a branch")]
+        delete: bool,
+        #[arg(short = 'D', help = "Force delete a branch")]
+        force_delete: bool,
+    },
     Ignore,
     Config,
     Checkout {
@@ -30,7 +35,7 @@ fn main() {
     let config = config::load_config();
     let result = match &cli.command {
         Some(Commands::Commit) => commit::run_commit(config.conventional_commits, config.ticket_prefix),
-        Some(Commands::Branch) => branch::run_branch(),
+        Some(Commands::Branch { delete , force_delete})=> branch::run_branch(delete.clone(), force_delete.clone()),
         Some(Commands::Checkout { create_new }) => checkout::run_checkout(create_new.clone()),
         Some(Commands::Ignore) => {
             println!("Ignore logic to implement later");
