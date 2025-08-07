@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.10](https://github.com/Gerixmus/supergit/compare/v0.1.9...v0.1.10) (2025-08-07)
+
+
+### Features
+
+* add conventional branch flag ([#35](https://github.com/Gerixmus/supergit/issues/35)) ([895a787](https://github.com/Gerixmus/supergit/commit/895a78763f55bfb28b82b6b91fee86df04e66c71))
+
 ## [0.1.9](https://github.com/Gerixmus/supergit/compare/v0.1.8...v0.1.9) (2025-08-07)
 
 
