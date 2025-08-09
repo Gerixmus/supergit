@@ -15,19 +15,24 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    #[command(about = "Configure the tool")]
+    Init,
+    #[command(about = "Record changes to the repository")]
     Commit,
+    #[command(about = "List, create, or delete branches")]
     Branch {
         #[arg(short = 'd', long = "delete", help = "Delete a branch")]
         delete: bool,
         #[arg(short = 'D', help = "Force delete a branch")]
         force_delete: bool,
     },
-    Ignore,
-    Init,
+    #[command(about = "Switch branches or restore working tree files")]
     Checkout {
         #[arg(short = 'b', long = "branch", help = "Create a new branch")] 
         create_new: bool,
     },
+    #[command(hide = true)]
+    Ignore,
 }
 
 fn main() {
