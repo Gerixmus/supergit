@@ -6,9 +6,13 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 pub struct Config {
+    #[serde(default)]
     pub push_commits: bool,
+    #[serde(default)]
     pub conventional_commits: bool,
+    #[serde(default)]
     pub conventional_branches: bool,
+    #[serde(default)]
     pub ticket_prefix: bool
 }
 
@@ -33,8 +37,6 @@ fn get_config_path() -> PathBuf {
 
 pub fn load_config() -> Config {
     let config_path = get_config_path();
-
-    println!("{}", config_path.display());
 
     let config_content = fs::read_to_string(&config_path)
         .unwrap_or_else(|_| toml::to_string(&Config::default()).unwrap());
