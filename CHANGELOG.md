@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.11](https://github.com/Gerixmus/supergit/compare/v0.1.10...v0.1.11) (2025-08-11)
+
+
+### Features
+
+* push only if configured ([#39](https://github.com/Gerixmus/supergit/issues/39)) ([4325e3a](https://github.com/Gerixmus/supergit/commit/4325e3ad5585367dbc28ef224081e244401502db))
+
 ## [0.1.10](https://github.com/Gerixmus/supergit/compare/v0.1.9...v0.1.10) (2025-08-07)
 
 
