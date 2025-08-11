@@ -23,7 +23,7 @@ fn get_type() -> Result<String, String> {
     }
 }
 
-pub fn run_commit(conventional_commit: bool, ticket_prefix: bool) -> Result<(), String> {
+pub fn run_commit(conventional_commit: bool, ticket_prefix: bool, push_commits: bool) -> Result<(), String> {
     let repo = git_operations::get_repository().map_err(|e| e.to_string())?;
 
     let (changes, staged) = git_operations::get_changes(&repo);
@@ -76,12 +76,16 @@ pub fn run_commit(conventional_commit: bool, ticket_prefix: bool) -> Result<(), 
         .prompt()
         .map_err(|e| format!("Failed to get confirmation: {}", e))?;
 
-    if should_commit {
+    if should_commit{
         git_operations::add_files(selected_files, &mut index)
             .map_err(|e| format!("Failed to add files: {}", e))?;
-        git_operations::commit_and_push(repo, index, message)
+        git_operations::commit_and_push(repo, index, message, push_commits)
             .map_err(|e| format!("❌ Commit and push failed: {}", e))?;
-        println!("✅ Commit and push successful!");
+        if push_commits {
+            println!("✅ Commit and push successful!");
+        } else {
+            println!("✅ Commit successful!");
+        }
     } else {
         println!("❌ Commit canceled or failed to get user confirmation.");
     }

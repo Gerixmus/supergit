@@ -132,7 +132,7 @@ pub fn add_files(selected_files: Vec<Change>, index: &mut git2::Index) -> Result
     Ok(())
 }
 
-pub fn commit_and_push(repo: git2::Repository, mut index: git2::Index, message: String) -> Result<(), git2::Error> {
+pub fn commit_and_push(repo: git2::Repository, mut index: git2::Index, message: String, push: bool) -> Result<(), git2::Error> {
     let signature = repo.signature()?;
     let tree_oid = index.write_tree()?;
     let tree = repo.find_tree(tree_oid)?;
@@ -143,7 +143,9 @@ pub fn commit_and_push(repo: git2::Repository, mut index: git2::Index, message: 
     let parent_refs: Vec<&git2::Commit> = parent_commits.iter().collect();
     repo.commit(Some("HEAD"), &signature,&signature, &message,&tree,&parent_refs)?;
 
-    push_with_git_cli(repo.path()).map_err(|e| git2::Error::from_str(&format!("Git CLI push failed: {}", e)))?;
+    if push {
+        push_with_git_cli(repo.path()).map_err(|e| git2::Error::from_str(&format!("Git CLI push failed: {}", e)))?;
+    }
 
     Ok(())
 }

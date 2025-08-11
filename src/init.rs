@@ -6,14 +6,20 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 pub struct Config {
+    #[serde(default)]
+    pub push_commits: bool,
+    #[serde(default)]
     pub conventional_commits: bool,
+    #[serde(default)]
     pub conventional_branches: bool,
+    #[serde(default)]
     pub ticket_prefix: bool
 }
 
 impl Config {
     pub fn default() -> Self {
         Config {
+            push_commits: false,
             conventional_commits: false,
             conventional_branches: false,
             ticket_prefix: false
@@ -35,7 +41,7 @@ pub fn load_config() -> Config {
     let config_content = fs::read_to_string(&config_path)
         .unwrap_or_else(|_| toml::to_string(&Config::default()).unwrap());
 
-    toml::from_str(&config_content).expect("Failed to parse config")
+    toml::from_str(&config_content).expect("Failed to parse config") 
 }
 
 pub fn run_config() -> Result<(), String> {
@@ -58,6 +64,7 @@ fn save_config(config: &Config, config_path: &PathBuf) -> io::Result<()> {
 
 fn create_config() -> Config {
     let settings = vec![
+        "push_commits",
         "conventional_commits",
         "conventional_branches",
         "ticket_prefix"
@@ -68,6 +75,7 @@ fn create_config() -> Config {
         .unwrap_or(vec![]);
 
     Config {
+        push_commits: selected_options.contains(&"push_commits"),
         conventional_commits: selected_options.contains(&"conventional_commits"),
         conventional_branches: selected_options.contains(&"conventional_branches"),
         ticket_prefix: selected_options.contains(&"ticket_prefix")
