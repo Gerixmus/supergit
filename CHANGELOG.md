@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.12](https://github.com/Gerixmus/supergit/compare/v0.1.11...v0.1.12) (2025-08-12)
+
+
+### Features
+
+* add scope ([#41](https://github.com/Gerixmus/supergit/issues/41)) ([039fd24](https://github.com/Gerixmus/supergit/commit/039fd24ec0326d8ab175debdfc8e606be3bc0bbf))
+
 ## [0.1.11](https://github.com/Gerixmus/supergit/compare/v0.1.10...v0.1.11) (2025-08-11)
 
 
