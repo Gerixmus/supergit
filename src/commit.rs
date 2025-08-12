@@ -52,17 +52,35 @@ pub fn run_commit(conventional_commit: bool, ticket_prefix: bool, push_commits: 
 
     let commit_type = if conventional_commit {
         let selected_type = get_type().map_err(|e| format!("An error occurred: {}", e))?;
-        format!("{}: ", selected_type)
-    } else {
-        String::new()
-    };
 
-    let ticket = if ticket_prefix {
-        let re = Regex::new(r"[A-Z]+-[0-9]+").unwrap();
-        let branch = git_operations::get_current_branch().unwrap();
-        re.find(&branch)
-            .map(|regex_match| format!(" ({})", regex_match.as_str()))
-            .unwrap_or_else(|| "".to_string())
+        let mut scope = Text::new("Scope:")
+            .prompt()
+            .map_err(|e| format!("An error occurred: {}", e))?;
+        if !scope.is_empty() {
+            scope = format!("({})", scope);
+        }
+
+        // TODO: implement breaking change in body
+        // let breaking_change = Confirm::new("BREAKING CHANGE?")
+        //     .with_default(false)
+        //     .prompt()
+        //     .map_err(|e| format!("Failed to get confirmation: {}", e))?;
+
+        // if breaking_change {
+        //     scope = format!("{}!", scope);
+        // }
+
+        format!("{}{}: ", selected_type, scope)
+        } else {
+            String::new()
+        };
+
+        let ticket = if ticket_prefix {
+            let re = Regex::new(r"[A-Z]+-[0-9]+").unwrap();
+            let branch = git_operations::get_current_branch().unwrap();
+            re.find(&branch)
+                .map(|regex_match| format!(" ({})", regex_match.as_str()))
+                .unwrap_or_else(|| "".to_string())
     } else {
         "".to_string()
     };
