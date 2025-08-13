@@ -3,13 +3,17 @@ use inquire::{Confirm, MultiSelect, Select, Text};
 use regex::Regex;
 
 fn print_in_box(message: &str) {
-    let border_len = message.len() + 4;
-    let horizontal_border = format!("+{}+", "-".repeat(border_len - 2));
+    let lines: Vec<&str> = message.lines().collect();
+    let max_len = lines.iter().map(|line| line.len()).max().unwrap_or(0);
+    let horizontal_border = format!("+{}+", "-".repeat(max_len + 2));
 
     println!("{}", horizontal_border);
-    println!("| {:width$} |", message, width = message.len());
+    for line in lines {
+        println!("| {:width$} |", line, width = max_len);
+    }
     println!("{}", horizontal_border);
 }
+
 
 fn get_type_and_scope() -> Result<String, String> {
     let options = vec![
@@ -40,7 +44,7 @@ fn get_type_and_scope() -> Result<String, String> {
 }
 
 pub fn run_commit(
-    conventional_commit: bool,
+    is_conventional_commit: bool,
     ticket_prefix: bool,
     push_commits: bool,
 ) -> Result<(), String> {
@@ -72,21 +76,11 @@ pub fn run_commit(
         .index()
         .map_err(|e| format!("Error accessing index: {}", e))?;
 
-    let commit_type = if conventional_commit {
+    let mut commit_header = if is_conventional_commit {
         let type_and_scope = get_type_and_scope()
             .map_err(|e| format!("An error occurred: {}", e))
             .map_err(|e| format!("Failed to get confirmation: {}", e))?;
-        format!("{}: ", type_and_scope)
-
-        // TODO: implement breaking change in body
-        // let breaking_change = Confirm::new("BREAKING CHANGE?")
-        //     .with_default(false)
-        //     .prompt()
-        //     .map_err(|e| format!("Failed to get confirmation: {}", e))?;
-
-        // if breaking_change {
-        //     scope = format!("{}!", scope);
-        // }
+        type_and_scope
     } else {
         String::new()
     };
@@ -104,7 +98,29 @@ pub fn run_commit(
     let user_input = Text::new("Enter commit message:")
         .prompt()
         .map_err(|e| format!("An error occurred: {}", e))?;
-    let message = format!("{}{}{}", commit_type, user_input, ticket);
+
+    let footer = if is_conventional_commit {
+        let is_breaking_change = Confirm::new("BREAKING CHANGE?")
+            .with_default(false)
+            .prompt()
+            .map_err(|e| format!("Failed to get confirmation: {}", e))?;
+
+        let breaking_change = if is_breaking_change {
+            let breaking_change_desc = Text::new("Breaking change description:")
+                .prompt()
+                .map_err(|e| format!("An error occurred: {}", e))?;
+            commit_header.push_str("!");
+            format!("\nBREAKING CHANGE: {}", breaking_change_desc)
+        } else {
+            String::new()
+        };
+        commit_header.push_str(": ");
+        breaking_change
+    } else {
+        String::new()
+    };
+
+    let message = format!("{}{}{}{}", commit_header, user_input, ticket, footer);
 
     print_in_box(&message);
 
