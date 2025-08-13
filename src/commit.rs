@@ -11,7 +11,7 @@ fn print_in_box(message: &str) {
     println!("{}", horizontal_border);
 }
 
-fn get_type() -> Result<String, String> {
+fn get_type_and_scope() -> Result<String, String> {
     let options = vec![
         "fix",
         "feat",
@@ -24,12 +24,19 @@ fn get_type() -> Result<String, String> {
         "improvement",
     ];
 
-    let selected_option = Select::new("Select commit type", options).prompt();
+    let selected_type = Select::new("Select commit type", options)
+        .prompt()
+        .map_err(|e| format!("An error occurred: {}", e))?;
 
-    match selected_option {
-        Ok(choice) => Ok(format!("{}", choice)),
-        Err(err) => Err(format!("An error occurred: {}", err)),
+    let mut scope = Text::new("Scope:")
+        .prompt()
+        .map_err(|e| format!("An error occurred: {}", e))?;
+
+    if !scope.is_empty() {
+        scope = format!("({})", scope);
     }
+
+    Ok(format!("{}{}", selected_type, scope))
 }
 
 pub fn run_commit(
@@ -66,14 +73,10 @@ pub fn run_commit(
         .map_err(|e| format!("Error accessing index: {}", e))?;
 
     let commit_type = if conventional_commit {
-        let selected_type = get_type().map_err(|e| format!("An error occurred: {}", e))?;
-
-        let mut scope = Text::new("Scope:")
-            .prompt()
-            .map_err(|e| format!("An error occurred: {}", e))?;
-        if !scope.is_empty() {
-            scope = format!("({})", scope);
-        }
+        let type_and_scope = get_type_and_scope()
+            .map_err(|e| format!("An error occurred: {}", e))
+            .map_err(|e| format!("Failed to get confirmation: {}", e))?;
+        format!("{}: ", type_and_scope)
 
         // TODO: implement breaking change in body
         // let breaking_change = Confirm::new("BREAKING CHANGE?")
@@ -84,8 +87,6 @@ pub fn run_commit(
         // if breaking_change {
         //     scope = format!("{}!", scope);
         // }
-
-        format!("{}{}: ", selected_type, scope)
     } else {
         String::new()
     };
