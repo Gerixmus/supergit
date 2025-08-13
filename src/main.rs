@@ -1,9 +1,9 @@
 use clap::{Parser, Subcommand};
 
-mod git_operations;
-mod commit;
 mod branch;
 mod checkout;
+mod commit;
+mod git_operations;
 mod init;
 
 #[derive(Parser)]
@@ -28,7 +28,7 @@ enum Commands {
     },
     #[command(about = "Switch branches or restore working tree files")]
     Checkout {
-        #[arg(short = 'b', long = "branch", help = "Create a new branch")] 
+        #[arg(short = 'b', long = "branch", help = "Create a new branch")]
         create_new: bool,
     },
     #[command(hide = true)]
@@ -39,9 +39,18 @@ fn main() {
     let cli = Cli::parse();
     let config = init::load_config();
     let result = match &cli.command {
-        Some(Commands::Commit) => commit::run_commit(config.conventional_commits, config.ticket_prefix, config.push_commits),
-        Some(Commands::Branch { delete , force_delete})=> branch::run_branch(delete.clone(), force_delete.clone()),
-        Some(Commands::Checkout { create_new }) => checkout::run_checkout(config.conventional_branches, create_new.clone()),
+        Some(Commands::Commit) => commit::run_commit(
+            config.conventional_commits,
+            config.ticket_prefix,
+            config.push_commits,
+        ),
+        Some(Commands::Branch {
+            delete,
+            force_delete,
+        }) => branch::run_branch(delete.clone(), force_delete.clone()),
+        Some(Commands::Checkout { create_new }) => {
+            checkout::run_checkout(config.conventional_branches, create_new.clone())
+        }
         Some(Commands::Ignore) => {
             println!("Ignore logic to implement later");
             Ok(())
@@ -52,7 +61,7 @@ fn main() {
             Ok(())
         }
     };
-    
+
     if let Err(err) = result {
         eprintln!("❌ Error: {}", err);
         std::process::exit(1);

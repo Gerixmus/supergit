@@ -1,4 +1,8 @@
-use std::{fs, io::{self, Write}, path::PathBuf};
+use std::{
+    fs,
+    io::{self, Write},
+    path::PathBuf,
+};
 
 use directories::ProjectDirs;
 use inquire::MultiSelect;
@@ -13,7 +17,7 @@ pub struct Config {
     #[serde(default)]
     pub conventional_branches: bool,
     #[serde(default)]
-    pub ticket_prefix: bool
+    pub ticket_prefix: bool,
 }
 
 impl Config {
@@ -22,14 +26,13 @@ impl Config {
             push_commits: false,
             conventional_commits: false,
             conventional_branches: false,
-            ticket_prefix: false
+            ticket_prefix: false,
         }
     }
 }
 
 fn get_config_path() -> PathBuf {
-    let proj_dirs  = ProjectDirs::from("", "", "supergit")
-        .expect("Failed to get project directory");
+    let proj_dirs = ProjectDirs::from("", "", "supergit").expect("Failed to get project directory");
 
     let directory = proj_dirs.config_dir();
     directory.join("config.toml")
@@ -41,7 +44,7 @@ pub fn load_config() -> Config {
     let config_content = fs::read_to_string(&config_path)
         .unwrap_or_else(|_| toml::to_string(&Config::default()).unwrap());
 
-    toml::from_str(&config_content).expect("Failed to parse config") 
+    toml::from_str(&config_content).expect("Failed to parse config")
 }
 
 pub fn run_config() -> Result<(), String> {
@@ -67,7 +70,7 @@ fn create_config() -> Config {
         "push_commits",
         "conventional_commits",
         "conventional_branches",
-        "ticket_prefix"
+        "ticket_prefix",
     ];
 
     let selected_options = MultiSelect::new("Select configuration:", settings)
@@ -78,6 +81,6 @@ fn create_config() -> Config {
         push_commits: selected_options.contains(&"push_commits"),
         conventional_commits: selected_options.contains(&"conventional_commits"),
         conventional_branches: selected_options.contains(&"conventional_branches"),
-        ticket_prefix: selected_options.contains(&"ticket_prefix")
+        ticket_prefix: selected_options.contains(&"ticket_prefix"),
     }
 }

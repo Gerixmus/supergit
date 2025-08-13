@@ -1,7 +1,7 @@
 use inquire::{Confirm, Select};
 use regex::Regex;
 
-use crate::{git_operations};
+use crate::git_operations;
 
 const BRANCH_TYPES: [&str; 5] = ["feature", "bugfix", "hotfix", "release", "chore"];
 
@@ -25,10 +25,11 @@ pub fn run_checkout(conventional_branches: bool, create_new: bool) -> Result<(),
 
         let full_branch = format!("{}{}", branch_type, branch_name);
 
-        let should_checkout = Confirm::new(&format!("Create and checkout to: \"{}\"?", full_branch))
-            .with_default(true)
-            .prompt()
-            .map_err(|e| format!("Failed to get confirmation: {}", e))?;
+        let should_checkout =
+            Confirm::new(&format!("Create and checkout to: \"{}\"?", full_branch))
+                .with_default(true)
+                .prompt()
+                .map_err(|e| format!("Failed to get confirmation: {}", e))?;
 
         if should_checkout {
             git_operations::create_and_checkout_branch(&full_branch).map_err(|e| e.to_string())?;
@@ -49,7 +50,7 @@ pub fn run_checkout(conventional_branches: bool, create_new: bool) -> Result<(),
             .map_err(|e| format!("Prompt error: {}", e))?;
 
         git_operations::checkout_branch(&selected_branch.name).map_err(|e| e.to_string())?;
-        
+
         Ok(())
     }
 }
