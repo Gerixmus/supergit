@@ -2,6 +2,15 @@ use crate::git_operations;
 use inquire::{Confirm, MultiSelect, Select, Text};
 use regex::Regex;
 
+fn print_in_box(message: &str) {
+    let border_len = message.len() + 4;
+    let horizontal_border = format!("+{}+", "-".repeat(border_len - 2));
+
+    println!("{}", horizontal_border);
+    println!("| {:width$} |", message, width = message.len());
+    println!("{}", horizontal_border);
+}
+
 fn get_type() -> Result<String, String> {
     let options = vec![
         "fix",
@@ -96,7 +105,9 @@ pub fn run_commit(
         .map_err(|e| format!("An error occurred: {}", e))?;
     let message = format!("{}{}{}", commit_type, user_input, ticket);
 
-    let should_commit = Confirm::new(&format!("Commit with message: \"{}\"?", message))
+    print_in_box(&message);
+
+    let should_commit = Confirm::new("Commit?")
         .with_default(true)
         .prompt()
         .map_err(|e| format!("Failed to get confirmation: {}", e))?;
