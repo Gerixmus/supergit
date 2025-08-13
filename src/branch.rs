@@ -1,4 +1,4 @@
-use std::{process::Command};
+use std::process::Command;
 
 use inquire::{Confirm, MultiSelect};
 
@@ -9,10 +9,10 @@ pub fn run_branch(delete: bool, force_delete: bool) -> Result<(), String> {
         .output()
         .map_err(|e| e.to_string())?;
 
-    let output_str  = String::from_utf8(output.stdout).map_err(|e| e.to_string())?;
+    let output_str = String::from_utf8(output.stdout).map_err(|e| e.to_string())?;
     let branches: Vec<String> = output_str.lines().map(|branch| branch.to_owned()).collect();
-    
-    if delete || force_delete {      
+
+    if delete || force_delete {
         let branches: Vec<String> = branches
             .into_iter()
             .filter(|line| !line.trim().starts_with("*"))
@@ -38,7 +38,7 @@ pub fn run_branch(delete: bool, force_delete: bool) -> Result<(), String> {
                     .arg(branch)
                     .status()
                     .map_err(|e| e.to_string())?;
-    
+
                 if !status.success() {
                     Err(format!("Failed to delete branch: {}", branch))
                 } else {

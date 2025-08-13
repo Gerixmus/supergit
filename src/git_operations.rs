@@ -1,12 +1,12 @@
-use core::fmt;
-use std::{path::Path, process::Command};
 use colored::Colorize;
+use core::fmt;
 use git2::{Repository, Status, StatusOptions};
+use std::{path::Path, process::Command};
 
 #[derive(Clone)]
 pub struct Change {
     pub path: String,
-    status: git2::Status
+    status: git2::Status,
 }
 
 impl fmt::Display for Change {
@@ -24,13 +24,17 @@ impl fmt::Display for Change {
 pub struct BranchInfo {
     pub name: String,
     pub is_current: bool,
-    pub upstream: bool
+    pub upstream: bool,
 }
 
 impl fmt::Display for BranchInfo {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let current_marker = if self.is_current { "* " } else { "  " };
-        let upstream_marker = if self.upstream { String::new() } else { " (no upstream)".red().to_string() };
+        let upstream_marker = if self.upstream {
+            String::new()
+        } else {
+            " (no upstream)".red().to_string()
+        };
         let branch_name = if self.is_current {
             self.name.green()
         } else {
@@ -47,22 +51,19 @@ pub fn get_branches() -> Result<Vec<BranchInfo>, git2::Error> {
     }
     let branches = repo.branches(Some(git2::BranchType::Local))?;
     let head = repo.head().ok();
-    let current_branch = head
-        .and_then(|h| h.shorthand().map(|s| s.to_string()));
+    let current_branch = head.and_then(|h| h.shorthand().map(|s| s.to_string()));
 
     let mut branch_list = Vec::new();
 
     for branch in branches {
         let (branch, _) = branch?;
-        let name = branch.name()?
-            .unwrap_or("Unnamed branch")
-            .to_string();
+        let name = branch.name()?.unwrap_or("Unnamed branch").to_string();
         let upstream = branch.upstream().is_ok();
 
-        branch_list.push(BranchInfo{
+        branch_list.push(BranchInfo {
             is_current: Some(name.clone()) == current_branch,
             name,
-            upstream
+            upstream,
         });
     }
 
@@ -70,15 +71,15 @@ pub fn get_branches() -> Result<Vec<BranchInfo>, git2::Error> {
 }
 
 fn fetch_with_prune() -> Result<(), std::io::Error> {
-    let status = Command::new("git")
-        .arg("fetch")
-        .arg("--prune")
-        .status()?;
+    let status = Command::new("git").arg("fetch").arg("--prune").status()?;
 
     if status.success() {
         Ok(())
     } else {
-        Err(std::io::Error::new(std::io::ErrorKind::Other, "git fetch with prune failed"))
+        Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            "git fetch with prune failed",
+        ))
     }
 }
 
@@ -105,11 +106,15 @@ pub fn get_changes(repo: &Repository) -> (Vec<Change>, Vec<Change>) {
     for entry in statuses.iter() {
         if let Some(path) = entry.path() {
             let path = path.to_string();
-            let status = entry.status();            
+            let status = entry.status();
             if status.intersects(Status::WT_NEW | Status::WT_MODIFIED | Status::WT_DELETED) {
-                untracked.push(Change { path: path.clone(), status });
+                untracked.push(Change {
+                    path: path.clone(),
+                    status,
+                });
             }
-            if status.intersects(Status::INDEX_NEW | Status::INDEX_MODIFIED | Status::INDEX_DELETED) {
+            if status.intersects(Status::INDEX_NEW | Status::INDEX_MODIFIED | Status::INDEX_DELETED)
+            {
                 staged.push(Change { path, status });
             }
         }
@@ -118,7 +123,7 @@ pub fn get_changes(repo: &Repository) -> (Vec<Change>, Vec<Change>) {
     (untracked, staged)
 }
 
-pub fn add_files(selected_files: Vec<Change>, index: &mut git2::Index) -> Result<(), git2::Error>{
+pub fn add_files(selected_files: Vec<Change>, index: &mut git2::Index) -> Result<(), git2::Error> {
     for change in selected_files.iter() {
         let path = Path::new(&change.path);
         if change.status == Status::WT_DELETED {
@@ -127,24 +132,38 @@ pub fn add_files(selected_files: Vec<Change>, index: &mut git2::Index) -> Result
             index.add_path(path).map_err(|err| err)?;
         }
     }
-    
+
     index.write()?;
     Ok(())
 }
 
-pub fn commit_and_push(repo: git2::Repository, mut index: git2::Index, message: String, push: bool) -> Result<(), git2::Error> {
+pub fn commit_and_push(
+    repo: git2::Repository,
+    mut index: git2::Index,
+    message: String,
+    push: bool,
+) -> Result<(), git2::Error> {
     let signature = repo.signature()?;
     let tree_oid = index.write_tree()?;
     let tree = repo.find_tree(tree_oid)?;
-    let parent_commits: Vec<git2::Commit> = repo.head()
+    let parent_commits: Vec<git2::Commit> = repo
+        .head()
         .ok()
         .and_then(|head| head.peel_to_commit().ok().map(|c| vec![c]))
-        .unwrap_or_default(); 
+        .unwrap_or_default();
     let parent_refs: Vec<&git2::Commit> = parent_commits.iter().collect();
-    repo.commit(Some("HEAD"), &signature,&signature, &message,&tree,&parent_refs)?;
+    repo.commit(
+        Some("HEAD"),
+        &signature,
+        &signature,
+        &message,
+        &tree,
+        &parent_refs,
+    )?;
 
     if push {
-        push_with_git_cli(repo.path()).map_err(|e| git2::Error::from_str(&format!("Git CLI push failed: {}", e)))?;
+        push_with_git_cli(repo.path())
+            .map_err(|e| git2::Error::from_str(&format!("Git CLI push failed: {}", e)))?;
     }
 
     Ok(())
@@ -161,26 +180,29 @@ fn push_with_git_cli(repo_path: &Path) -> Result<(), std::io::Error> {
     if status.success() {
         Ok(())
     } else {
-        Err(std::io::Error::new(std::io::ErrorKind::Other, "git push failed"))
+        Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            "git push failed",
+        ))
     }
 }
 
-pub fn checkout_branch(branch: &str) -> Result<(), git2::Error>  {
+pub fn checkout_branch(branch: &str) -> Result<(), git2::Error> {
     let repo = get_repository()?;
 
-    let (object, reference) = repo
-        .revparse_ext(branch)?;
+    let (object, reference) = repo.revparse_ext(branch)?;
 
     repo.checkout_tree(&object, None)?;
 
     if let Some(reference) = reference {
-        let reference_name = reference.name()
+        let reference_name = reference
+            .name()
             .ok_or_else(|| git2::Error::from_str("Invalid branch reference"))?;
         repo.set_head(reference_name)?;
     } else {
         repo.set_head_detached(object.id())?;
     }
-    
+
     Ok(())
 }
 
@@ -189,8 +211,8 @@ pub fn get_current_branch() -> Result<String, git2::Error> {
 
     let head = repo.head()?;
     head.shorthand()
-    .map(|s| s.to_string())
-    .ok_or_else(|| git2::Error::from_str("Failed to get branch name"))
+        .map(|s| s.to_string())
+        .ok_or_else(|| git2::Error::from_str("Failed to get branch name"))
 }
 
 pub fn create_and_checkout_branch(branch_name: &str) -> Result<(), git2::Error> {
@@ -201,7 +223,9 @@ pub fn create_and_checkout_branch(branch_name: &str) -> Result<(), git2::Error> 
 
     let branch = repo.branch(branch_name, &target_commit, false)?;
 
-    let branch_ref = branch.get().name()
+    let branch_ref = branch
+        .get()
+        .name()
         .ok_or_else(|| git2::Error::from_str("Invalid branch reference name"))?;
 
     let obj = repo.revparse_single(branch_ref)?;
