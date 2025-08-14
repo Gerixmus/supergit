@@ -13,7 +13,6 @@ fn print_in_box(message: &str) {
     println!("└{}┘", "─".repeat(max_len + 2));
 }
 
-
 fn get_type_and_scope() -> Result<String, String> {
     let options = vec![
         "fix",
@@ -44,7 +43,7 @@ fn get_type_and_scope() -> Result<String, String> {
 
 pub fn run_commit(
     is_conventional_commit: bool,
-    ticket_prefix: bool,
+    ticket_suffix: bool,
     push_commits: bool,
 ) -> Result<(), String> {
     let repo = git_operations::get_repository().map_err(|e| e.to_string())?;
@@ -84,7 +83,7 @@ pub fn run_commit(
         String::new()
     };
 
-    let ticket = if ticket_prefix {
+    let ticket = if ticket_suffix {
         let re = Regex::new(r"[A-Z]+-[0-9]+").unwrap();
         let branch = git_operations::get_current_branch().unwrap();
         re.find(&branch)
