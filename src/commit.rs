@@ -5,13 +5,12 @@ use regex::Regex;
 fn print_in_box(message: &str) {
     let lines: Vec<&str> = message.lines().collect();
     let max_len = lines.iter().map(|line| line.len()).max().unwrap_or(0);
-    let horizontal_border = format!("+{}+", "-".repeat(max_len + 2));
 
-    println!("{}", horizontal_border);
+    println!("┌{}┐", "─".repeat(max_len + 2));
     for line in lines {
-        println!("| {:width$} |", line, width = max_len);
+        println!("│ {:width$} │", line, width = max_len);
     }
-    println!("{}", horizontal_border);
+    println!("└{}┘", "─".repeat(max_len + 2));
 }
 
 
