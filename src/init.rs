@@ -5,30 +5,53 @@ use std::{
 };
 
 use directories::ProjectDirs;
-use inquire::MultiSelect;
+use inquire::Confirm;
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug, Default)]
+#[serde(default)]
 pub struct Config {
-    #[serde(default)]
-    pub push_commits: bool,
-    #[serde(default)]
-    pub conventional_commits: bool,
-    #[serde(default)]
+    pub commit: Commit,
     pub conventional_branches: bool,
-    #[serde(default)]
-    pub ticket_prefix: bool,
+}
+
+#[derive(Deserialize, Serialize, Debug, Default)]
+#[serde(default)]
+pub struct Commit {
+    pub push_commits: bool,
+    pub conventional_commits: bool,
+    pub ticket_suffix: bool,
 }
 
 impl Config {
-    pub fn default() -> Self {
+    fn default() -> Self {
         Config {
-            push_commits: false,
-            conventional_commits: false,
+            commit: Commit {
+                push_commits: false,
+                conventional_commits: false,
+                ticket_suffix: false,
+            },
             conventional_branches: false,
-            ticket_prefix: false,
         }
     }
+}
+
+pub fn load_config() -> Config {
+    let config_path = get_config_path();
+
+    if let Ok(config_content) = fs::read_to_string(&config_path) {
+        toml::from_str(&config_content).expect("Failed to parse config")
+    } else {
+        Config::default()
+    }
+}
+
+pub fn run_config() -> Result<(), String> {
+    let config_path = get_config_path();
+    let config = create_config()?;
+    save_config(&config, &config_path).map_err(|e| format!("Failed to save config: {}", e))?;
+    println!("✅ Config created successfuly!");
+    Ok(())
 }
 
 fn get_config_path() -> PathBuf {
@@ -36,23 +59,6 @@ fn get_config_path() -> PathBuf {
 
     let directory = proj_dirs.config_dir();
     directory.join("config.toml")
-}
-
-pub fn load_config() -> Config {
-    let config_path = get_config_path();
-
-    let config_content = fs::read_to_string(&config_path)
-        .unwrap_or_else(|_| toml::to_string(&Config::default()).unwrap());
-
-    toml::from_str(&config_content).expect("Failed to parse config")
-}
-
-pub fn run_config() -> Result<(), String> {
-    let config_path = get_config_path();
-    let config = create_config();
-    save_config(&config, &config_path).map_err(|e| format!("Failed to save config: {}", e))?;
-    println!("✅ Config created successfuly!");
-    Ok(())
 }
 
 fn save_config(config: &Config, config_path: &PathBuf) -> io::Result<()> {
@@ -65,22 +71,46 @@ fn save_config(config: &Config, config_path: &PathBuf) -> io::Result<()> {
     Ok(())
 }
 
-fn create_config() -> Config {
-    let settings = vec![
-        "push_commits",
-        "conventional_commits",
-        "conventional_branches",
-        "ticket_prefix",
+struct Setting<'a> {
+    label: &'a str,
+    get: fn(&Config) -> bool,
+    set: fn(&mut Config, bool),
+}
+
+fn create_config() -> Result<Config, String> {
+    let mut config = Config::default();
+
+    let mut settings = vec![
+        Setting {
+            label: "Automatically push commits?",
+            get: |conf| conf.commit.push_commits,
+            set: |conf, val| conf.commit.push_commits = val,
+        },
+        Setting {
+            label: "Use conventional commits?",
+            get: |conf| conf.commit.conventional_commits,
+            set: |conf, val| conf.commit.conventional_commits = val,
+        },
+        Setting {
+            label: "Use ticket suffix?",
+            get: |conf| conf.commit.ticket_suffix,
+            set: |conf, val| conf.commit.ticket_suffix = val,
+        },
+        Setting {
+            label: "Use conventional branches?",
+            get: |conf| conf.conventional_branches,
+            set: |conf, val| conf.conventional_branches = val,
+        },
     ];
 
-    let selected_options = MultiSelect::new("Select configuration:", settings)
-        .prompt()
-        .unwrap_or(vec![]);
+    for setting in settings.iter_mut() {
+        let answer = Confirm::new(setting.label)
+            .with_default((setting.get)(&config))
+            .prompt()
+            .map_err(|e| format!("An error occurred during selection: {}", e))?;
 
-    Config {
-        push_commits: selected_options.contains(&"push_commits"),
-        conventional_commits: selected_options.contains(&"conventional_commits"),
-        conventional_branches: selected_options.contains(&"conventional_branches"),
-        ticket_prefix: selected_options.contains(&"ticket_prefix"),
+        (setting.set)(&mut config, answer);
     }
+
+    Ok(config)
 }

@@ -40,9 +40,10 @@ fn main() {
     let config = init::load_config();
     let result = match &cli.command {
         Some(Commands::Commit) => commit::run_commit(
-            config.conventional_commits,
-            config.ticket_prefix,
-            config.push_commits,
+            //TODO: pass only the necessary toml table
+            config.commit.conventional_commits,
+            config.commit.ticket_suffix,
+            config.commit.push_commits,
         ),
         Some(Commands::Branch {
             delete,
