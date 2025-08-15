@@ -4,6 +4,7 @@ mod branch;
 mod checkout;
 mod commit;
 mod git_operations;
+mod ignore;
 mod init;
 
 #[derive(Parser)]
@@ -31,7 +32,7 @@ enum Commands {
         #[arg(short = 'b', long = "branch", help = "Create a new branch")]
         create_new: bool,
     },
-    #[command(hide = true)]
+    #[command()]
     Ignore,
 }
 
@@ -47,10 +48,7 @@ fn main() {
         Some(Commands::Checkout { create_new }) => {
             checkout::run_checkout(config.conventional_branches, create_new.clone())
         }
-        Some(Commands::Ignore) => {
-            println!("Ignore logic to implement later");
-            Ok(())
-        }
+        Some(Commands::Ignore) => ignore::run_ignore(),
         Some(Commands::Init) => init::run_config(),
         None => {
             println!("Default logic to implement later");
