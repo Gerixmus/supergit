@@ -39,12 +39,7 @@ fn main() {
     let cli = Cli::parse();
     let config = init::load_config();
     let result = match &cli.command {
-        Some(Commands::Commit) => commit::run_commit(
-            //TODO: pass only the necessary toml table
-            config.commit.conventional_commits,
-            config.commit.ticket_suffix,
-            config.commit.push_commits,
-        ),
+        Some(Commands::Commit) => commit::run_commit(config.commit),
         Some(Commands::Branch {
             delete,
             force_delete,
