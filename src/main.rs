@@ -39,11 +39,7 @@ fn main() {
     let cli = Cli::parse();
     let config = init::load_config();
     let result = match &cli.command {
-        Some(Commands::Commit) => commit::run_commit(
-            config.conventional_commits,
-            config.ticket_prefix,
-            config.push_commits,
-        ),
+        Some(Commands::Commit) => commit::run_commit(config.commit),
         Some(Commands::Branch {
             delete,
             force_delete,
