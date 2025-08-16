@@ -1,3 +1,4 @@
+use crossterm::style::Stylize;
 use core::fmt;
 use git2::{Repository, Status, StatusOptions};
 use std::{path::Path, process::Command};
@@ -39,6 +40,11 @@ impl fmt::Display for BranchInfo {
             "".to_string()
         } else {
             " (no upstream)".red().to_string()
+        };
+        let branch_name = if self.is_current {
+            self.name.as_str().green()
+        } else {
+            self.name.as_str().reset()
         };
         write!(f, "{}{}{}", current_marker, branch_name, upstream_marker)
     }

@@ -7,10 +7,7 @@ use std::{
 };
 
 use crossterm::{
-    cursor::{position, Hide, MoveTo, Show},
-    event::{read, Event, KeyCode, KeyEventKind, KeyModifiers},
-    terminal::{disable_raw_mode, enable_raw_mode, Clear, ClearType},
-    ExecutableCommand,
+    cursor::{position, Hide, MoveTo, Show}, event::{read, Event, KeyCode, KeyEventKind, KeyModifiers}, style::Stylize, terminal::{disable_raw_mode, enable_raw_mode, Clear, ClearType}, ExecutableCommand
 };
 
 pub fn run_ignore() -> Result<(), String> {
@@ -44,11 +41,11 @@ fn select_files(items: Vec<&str>) -> std::io::Result<()> {
     for (_i, item) in items.iter().enumerate() {
         println!("  {}", item);
     }
-    println!("[↑↓ to move]");
+    println!("{}", format!("[↑↓ to move]").cyan());
 
     let mut selected = 0;
     stdout.execute(MoveTo(0, start_row + selected as u16))?;
-    print!("> {}", items[selected]);
+    println!("{}{}", "> ".cyan(), items[selected].cyan());
     stdout.flush()?;
 
     loop {
@@ -80,7 +77,7 @@ fn select_files(items: Vec<&str>) -> std::io::Result<()> {
                 print!("  {}", items[prev_selected]);
 
                 stdout.execute(MoveTo(0, start_row + selected as u16))?;
-                print!("> {}", items[selected]);
+                print!("{}{}", "> ".cyan(), items[selected].cyan());
 
                 stdout.flush()?;
             }
