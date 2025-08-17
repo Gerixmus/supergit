@@ -50,31 +50,21 @@ fn select_files(items: &Vec<Node>) -> std::io::Result<()> {
                 break;
             };
 
-            if key_event.code == KeyCode::Down
-                && key_event.kind == KeyEventKind::Press
-                && !items.is_empty()
-            {
+            if key_event.code == KeyCode::Down && key_event.kind == KeyEventKind::Press && !items.is_empty() {
                 selected = (selected + 1) % items.len();
                 clear_terminal(start_row, start_row + size as u16)?;
                 (start, end, current) = calculate_table(selected, size, items.len());
                 print_range(start_row as usize, current, &items[start..end])?;
             }
 
-            if key_event.code == KeyCode::Up
-                && key_event.kind == KeyEventKind::Press
-                && !items.is_empty()
-            {
+            if key_event.code == KeyCode::Up && key_event.kind == KeyEventKind::Press && !items.is_empty() {
                 selected = (selected + items.len() - 1) % items.len();
                 clear_terminal(start_row, start_row + size as u16)?;
                 (start, end, current) = calculate_table(selected, size, items.len());
                 print_range(start_row as usize, current, &items[start..end])?;
             }
 
-            if key_event.code == KeyCode::Right
-                && key_event.kind == KeyEventKind::Press
-                && !items.is_empty()
-                && items[selected].path.is_dir()
-            {
+            if key_event.code == KeyCode::Right && key_event.kind == KeyEventKind::Press && !items.is_empty() && items[selected].path.is_dir()  {
                 clear_terminal(start_row, items.len() as u16 + start_row)?;
                 stdout.execute(MoveTo(0, start_row - 1))?;
                 select_files(&items[selected].children)?;
@@ -95,7 +85,7 @@ fn select_files(items: &Vec<Node>) -> std::io::Result<()> {
 }
 
 fn calculate_table(selected: usize, size: usize, len: usize) -> (usize, usize, usize) {
-    if size < 7 {
+    if size < 7 || len == 7 {
         (0, size, selected)
     } else if selected + 4 <= len && selected >= 3 {
         (selected - 3, size + selected - 3, 3)
