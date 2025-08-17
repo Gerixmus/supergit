@@ -7,7 +7,7 @@ edition = "2021"
 inquire = "0.7.5"
 git2 = "0.20.0"
 serde = { version= "1.0.217", features = ["derive"] }
-toml = "0.8.20"
+toml = "0.9.5"
 directories = "6.0.0"
 clap =  { version = "4.5.30", features = ["derive"] }
 regex = "1.11.1"
