@@ -1,7 +1,7 @@
 use std::{
     env::current_dir,
     fs::read_dir,
-    io::{stdout, Write},
+    io::{stdout},
     path::PathBuf,
     vec,
 };
@@ -21,70 +21,100 @@ pub fn run_ignore() -> Result<(), String> {
 
     let current_node = &root;
 
-    let files: Vec<&str> = current_node
-        .children
-        .iter()
-        .filter_map(|child| child.path.file_name()?.to_str())
-        .collect();
-
-    let _files = select_files(files);
+    let _files = select_files(&current_node.children);
     Ok(())
 }
 
-fn select_files(items: Vec<&str>) -> std::io::Result<()> {
+fn select_files(items: &Vec<Node>) -> std::io::Result<()> {
     enable_raw_mode()?;
     let mut stdout = stdout();
     stdout.execute(Hide)?;
+    println!("{}{}", "? ".green(), "Select items to ignore:");
 
     let (_, start_row) = position()?;
 
-    for (_i, item) in items.iter().enumerate() {
-        println!("  {}", item);
-    }
+    let size: usize = if items.len() > 7 { 7 } else { items.len() - 1 };
+    let mut start = 0;
+    let mut end = size + 1;
+
+    print_range(start_row as usize, 0, &items[start..end])?;
     println!("{}", format!("[↑↓ to move]").cyan());
 
     let mut selected = 0;
-    stdout.execute(MoveTo(0, start_row + selected as u16))?;
-    println!("{}{}", "> ".cyan(), items[selected].cyan());
-    stdout.flush()?;
+    let mut current = 0;
 
     loop {
         if let Event::Key(key_event) = read()? {
             if key_event.code == KeyCode::Char('c')
                 && key_event.modifiers.contains(KeyModifiers::CONTROL)
             {
-                stdout.execute(MoveTo(0, 0))?;
-
-                for i in 1..items.len() + 1 {
-                    stdout.execute(MoveTo(0, start_row + i as u16))?;
-                    stdout.execute(Clear(ClearType::CurrentLine))?;
-                }
-
-                stdout.execute(MoveTo(0, start_row))?;
+                clear_terminal(1 + start_row, items.len() as u16 + 1 + start_row)?;
                 break;
             };
-
-            let prev_selected = selected;
-
+            
             if key_event.code == KeyCode::Down && key_event.kind == KeyEventKind::Press {
                 selected = (selected + 1) % items.len();
+                clear_terminal(start_row, start_row + size as u16 + 1)?;
+                (start, end, current) = calculate_table(selected, size, items.len());
+                print_range(start_row as usize, current, &items[start..end])?;
             }
+            
             if key_event.code == KeyCode::Up && key_event.kind == KeyEventKind::Press {
                 selected = (selected + items.len() - 1) % items.len();
+                clear_terminal(start_row, start_row + size as u16 + 1)?;
+                (start, end, current) = calculate_table(selected, size, items.len());
+                print_range(start_row as usize, current, &items[start..end])?;
             }
-            if prev_selected != selected {
-                stdout.execute(MoveTo(0, start_row + prev_selected as u16))?;
-                print!("  {}", items[prev_selected]);
-
-                stdout.execute(MoveTo(0, start_row + selected as u16))?;
-                print!("{}{}", "> ".cyan(), items[selected].cyan());
-
-                stdout.flush()?;
+            
+            if key_event.code == KeyCode::Right && key_event.kind == KeyEventKind::Press {
+                if items[selected].path.is_dir()  {
+                    clear_terminal(start_row, items.len() as u16 + 1 + start_row)?;
+                    stdout.execute(MoveTo(0, start_row-1))?;
+                    select_files(&items[selected].children)?;
+                    print_range(start_row as usize, current, &items[start..end])?;
+                }
+            }
+            
+            if key_event.code == KeyCode::Left && key_event.kind == KeyEventKind::Press {
+                clear_terminal(0 + start_row, items.len() as u16 + 1 + start_row)?;
+                stdout.execute(MoveTo(0, start_row-1))?;
+                return Ok(());
             }
         }
     }
+    stdout.execute(MoveTo(0, start_row))?;
     stdout.execute(Show)?;
     disable_raw_mode()?;
+    Ok(())
+}
+
+fn calculate_table(selected: usize, size: usize, len: usize) -> (usize, usize, usize) {
+     if selected + 4 < len && selected >= 3 {
+        (selected - 3, size + 1 + selected - 3, 3)
+    } else if selected < 3 {
+        (0, size + 1, selected)
+    } else {
+        (len - 1 - size, len, selected - size + 2)
+    }
+}
+
+fn print_range(start: usize, current: usize, items: &[Node]) -> std::io::Result<()> {
+    for i in 0..items.len(){
+        stdout().execute(MoveTo(0, i as u16 + start as u16))?;
+        if current == i {
+            println!("{}{}", "> ".cyan(), items[i].file_name().cyan());
+        } else {
+            println!("  {}", items[i].file_name())
+        }
+    };
+    Ok(())
+}
+
+fn clear_terminal(start: u16, end: u16) -> std::io::Result<()> {
+    for i in start..end {
+        stdout().execute(MoveTo(0, i))?;
+        stdout().execute(Clear(ClearType::CurrentLine))?;
+    };
     Ok(())
 }
 
@@ -92,6 +122,16 @@ fn select_files(items: Vec<&str>) -> std::io::Result<()> {
 struct Node {
     path: PathBuf,
     children: Vec<Node>,
+}
+
+impl Node {
+    fn file_name(&self) -> &str {
+        self.path
+            .file_name()
+            .expect("no file name")
+            .to_str()
+            .expect("invalid UTF-8 in file name")
+    }
 }
 
 fn get_children(node: &mut Node) {
