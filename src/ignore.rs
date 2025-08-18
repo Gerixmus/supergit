@@ -1,3 +1,4 @@
+use std::ops::Range;
 use std::{env::current_dir, fs::read_dir, io::stdout, path::PathBuf, vec};
 
 use crossterm::{
@@ -15,7 +16,7 @@ pub fn run_ignore() -> Result<(), String> {
         path: dir,
         children: vec![],
     };
-    get_children(&mut root);
+    create_file_tree(&mut root);
 
     let current_node = &root;
 
@@ -34,13 +35,12 @@ fn select_files(items: &Vec<Node>) -> std::io::Result<()> {
     let (_, start_row) = position()?;
 
     let size: usize = items.len().min(MAX_SIZE);
-    let mut start = 0;
-    let mut end = size;
+    let mut range = 0..size;
 
-    print_range(start_row as usize, 0, &items[start..end])?;
+    print_range(start_row as usize, 0, &items[range.start..range.end])?;
 
     let mut selected = 0;
-    let mut current = 0;
+    let mut highlight_row = 0;
 
     loop {
         if let Event::Key(key_event) = read()? {
@@ -57,8 +57,8 @@ fn select_files(items: &Vec<Node>) -> std::io::Result<()> {
             {
                 selected = (selected + 1) % items.len();
                 clear_terminal(start_row, start_row + size as u16 + 1)?;
-                (start, end, current) = calculate_table(selected, size, items.len());
-                print_range(start_row as usize, current, &items[start..end])?;
+                (range, highlight_row) = calculate_table(selected, size, items.len());
+                print_range(start_row as usize, highlight_row, &items[range.start..range.end])?;
             }
 
             if key_event.code == KeyCode::Up
@@ -67,8 +67,8 @@ fn select_files(items: &Vec<Node>) -> std::io::Result<()> {
             {
                 selected = (selected + items.len() - 1) % items.len();
                 clear_terminal(start_row, start_row + size as u16 + 1)?;
-                (start, end, current) = calculate_table(selected, size, items.len());
-                print_range(start_row as usize, current, &items[start..end])?;
+                (range, highlight_row) = calculate_table(selected, size, items.len());
+                print_range(start_row as usize, highlight_row, &items[range.start..range.end])?;
             }
 
             if key_event.code == KeyCode::Right
@@ -79,7 +79,7 @@ fn select_files(items: &Vec<Node>) -> std::io::Result<()> {
                 clear_terminal(start_row, start_row + size as u16 + 1)?;
                 stdout.execute(MoveTo(0, start_row - 1))?;
                 select_files(&items[selected].children)?;
-                print_range(start_row as usize, current, &items[start..end])?;
+                print_range(start_row as usize, highlight_row, &items[range.start..range.end])?;
             }
 
             if key_event.code == KeyCode::Left && key_event.kind == KeyEventKind::Press {
@@ -95,26 +95,27 @@ fn select_files(items: &Vec<Node>) -> std::io::Result<()> {
     Ok(())
 }
 
-fn calculate_table(selected: usize, size: usize, len: usize) -> (usize, usize, usize) {
-    if size < MAX_SIZE || len == MAX_SIZE || selected <= 3 {
-        (0, size, selected)
-    } else if selected >= len - 3 {
-        (len - size, len, selected - (len - size))
+fn calculate_table(selected: usize, size: usize, len: usize) -> (Range<usize>, usize) {
+    let half = MAX_SIZE / 2;
+    if size < MAX_SIZE || len == MAX_SIZE || selected <= half {
+        (0..size, selected)
+    } else if selected >= len - half {
+        (len - size..len, selected - (len - size))
     } else {
-        (selected - 3, size + selected - 3, 3)
+        (selected - half..size + selected - half, half)
     }
 }
 
-fn print_range(start: usize, current: usize, items: &[Node]) -> std::io::Result<()> {
+fn print_range(start: usize, highlight_row: usize, items: &[Node]) -> std::io::Result<()> {
     for i in 0..items.len() {
         stdout().execute(MoveTo(0, i as u16 + start as u16))?;
-        if current == i {
+        if highlight_row == i {
             println!("{}{}", "> ".cyan(), items[i].file_name().cyan());
         } else {
             println!("  {}", items[i].file_name())
         }
     }
-    println!("{}", format!("[↑↓ to move]").cyan());
+    println!("{}", format!("[↑↓ to move, → to expand, ← to collapse]").cyan());
     Ok(())
 }
 
@@ -142,7 +143,7 @@ impl Node {
     }
 }
 
-fn get_children(node: &mut Node) {
+fn create_file_tree(node: &mut Node) {
     let path = &node.path;
     if !path.metadata().unwrap().is_dir() {
         return;
@@ -157,6 +158,6 @@ fn get_children(node: &mut Node) {
     }
 
     for child in &mut node.children {
-        get_children(child);
+        create_file_tree(child);
     }
 }
