@@ -58,7 +58,11 @@ fn select_files(items: &Vec<Node>) -> std::io::Result<()> {
                 selected = (selected + 1) % items.len();
                 clear_terminal(start_row, start_row + size as u16 + 1)?;
                 (range, highlight_row) = calculate_table(selected, size, items.len());
-                print_range(start_row as usize, highlight_row, &items[range.start..range.end])?;
+                print_range(
+                    start_row as usize,
+                    highlight_row,
+                    &items[range.start..range.end],
+                )?;
             }
 
             if key_event.code == KeyCode::Up
@@ -68,7 +72,11 @@ fn select_files(items: &Vec<Node>) -> std::io::Result<()> {
                 selected = (selected + items.len() - 1) % items.len();
                 clear_terminal(start_row, start_row + size as u16 + 1)?;
                 (range, highlight_row) = calculate_table(selected, size, items.len());
-                print_range(start_row as usize, highlight_row, &items[range.start..range.end])?;
+                print_range(
+                    start_row as usize,
+                    highlight_row,
+                    &items[range.start..range.end],
+                )?;
             }
 
             if key_event.code == KeyCode::Right
@@ -79,7 +87,11 @@ fn select_files(items: &Vec<Node>) -> std::io::Result<()> {
                 clear_terminal(start_row, start_row + size as u16 + 1)?;
                 stdout.execute(MoveTo(0, start_row - 1))?;
                 select_files(&items[selected].children)?;
-                print_range(start_row as usize, highlight_row, &items[range.start..range.end])?;
+                print_range(
+                    start_row as usize,
+                    highlight_row,
+                    &items[range.start..range.end],
+                )?;
             }
 
             if key_event.code == KeyCode::Left && key_event.kind == KeyEventKind::Press {
@@ -115,7 +127,10 @@ fn print_range(start: usize, highlight_row: usize, items: &[Node]) -> std::io::R
             println!("  {}", items[i].file_name())
         }
     }
-    println!("{}", format!("[↑↓ to move, → to expand, ← to collapse]").cyan());
+    println!(
+        "{}",
+        format!("[↑↓ to move, → to expand, ← to collapse]").cyan()
+    );
     Ok(())
 }
 

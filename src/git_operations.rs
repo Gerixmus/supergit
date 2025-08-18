@@ -1,5 +1,5 @@
-use crossterm::style::Stylize;
 use core::fmt;
+use crossterm::style::Stylize;
 use git2::{Repository, Status, StatusOptions};
 use std::{path::Path, process::Command};
 use crossterm::style::{Stylize};
