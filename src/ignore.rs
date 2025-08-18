@@ -23,6 +23,8 @@ pub fn run_ignore() -> Result<(), String> {
     Ok(())
 }
 
+const MAX_SIZE: usize = 7;
+
 fn select_files(items: &Vec<Node>) -> std::io::Result<()> {
     enable_raw_mode()?;
     let mut stdout = stdout();
@@ -31,12 +33,11 @@ fn select_files(items: &Vec<Node>) -> std::io::Result<()> {
 
     let (_, start_row) = position()?;
 
-    let size: usize = if items.len() > 7 { 7 } else { items.len() };
+    let size: usize = items.len().min(MAX_SIZE);
     let mut start = 0;
     let mut end = size;
 
     print_range(start_row as usize, 0, &items[start..end])?;
-    // println!("{}", format!("[↑↓ to move]").cyan());
 
     let mut selected = 0;
     let mut current = 0;
@@ -46,33 +47,43 @@ fn select_files(items: &Vec<Node>) -> std::io::Result<()> {
             if key_event.code == KeyCode::Char('c')
                 && key_event.modifiers.contains(KeyModifiers::CONTROL)
             {
-                clear_terminal(1 + start_row, items.len() as u16 + start_row)?;
+                clear_terminal(start_row, start_row + size as u16 + 1)?;
                 break;
             };
 
-            if key_event.code == KeyCode::Down && key_event.kind == KeyEventKind::Press && !items.is_empty() {
+            if key_event.code == KeyCode::Down
+                && key_event.kind == KeyEventKind::Press
+                && !items.is_empty()
+            {
                 selected = (selected + 1) % items.len();
-                clear_terminal(start_row, start_row + size as u16)?;
+                clear_terminal(start_row, start_row + size as u16 + 1)?;
                 (start, end, current) = calculate_table(selected, size, items.len());
                 print_range(start_row as usize, current, &items[start..end])?;
             }
 
-            if key_event.code == KeyCode::Up && key_event.kind == KeyEventKind::Press && !items.is_empty() {
+            if key_event.code == KeyCode::Up
+                && key_event.kind == KeyEventKind::Press
+                && !items.is_empty()
+            {
                 selected = (selected + items.len() - 1) % items.len();
-                clear_terminal(start_row, start_row + size as u16)?;
+                clear_terminal(start_row, start_row + size as u16 + 1)?;
                 (start, end, current) = calculate_table(selected, size, items.len());
                 print_range(start_row as usize, current, &items[start..end])?;
             }
 
-            if key_event.code == KeyCode::Right && key_event.kind == KeyEventKind::Press && !items.is_empty() && items[selected].path.is_dir()  {
-                clear_terminal(start_row, items.len() as u16 + start_row)?;
+            if key_event.code == KeyCode::Right
+                && key_event.kind == KeyEventKind::Press
+                && !items.is_empty()
+                && items[selected].path.is_dir()
+            {
+                clear_terminal(start_row, start_row + size as u16 + 1)?;
                 stdout.execute(MoveTo(0, start_row - 1))?;
                 select_files(&items[selected].children)?;
                 print_range(start_row as usize, current, &items[start..end])?;
             }
 
             if key_event.code == KeyCode::Left && key_event.kind == KeyEventKind::Press {
-                clear_terminal(0 + start_row, items.len() as u16 + start_row)?;
+                clear_terminal(start_row, start_row + size as u16 + 1)?;
                 stdout.execute(MoveTo(0, start_row - 1))?;
                 return Ok(());
             }
@@ -85,14 +96,12 @@ fn select_files(items: &Vec<Node>) -> std::io::Result<()> {
 }
 
 fn calculate_table(selected: usize, size: usize, len: usize) -> (usize, usize, usize) {
-    if size < 7 || len == 7 {
+    if size < MAX_SIZE || len == MAX_SIZE || selected <= 3 {
         (0, size, selected)
-    } else if selected + 4 <= len && selected >= 3 {
-        (selected - 3, size + selected - 3, 3)
-    } else if selected < 3 {
-        (0, size, selected)
+    } else if selected >= len - 3 {
+        (len - size, len, selected - (len - size))
     } else {
-        (len - size, len, selected - size + 1)
+        (selected - 3, size + selected - 3, 3)
     }
 }
 
@@ -105,7 +114,7 @@ fn print_range(start: usize, current: usize, items: &[Node]) -> std::io::Result<
             println!("  {}", items[i].file_name())
         }
     }
-    // println!("{}", format!("[↑↓ to move]").cyan());
+    println!("{}", format!("[↑↓ to move]").cyan());
     Ok(())
 }
 
