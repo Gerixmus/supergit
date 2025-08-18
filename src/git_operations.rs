@@ -1,7 +1,7 @@
-use colored::Colorize;
 use core::fmt;
 use git2::{Repository, Status, StatusOptions};
 use std::{path::Path, process::Command};
+use crossterm::style::{Stylize};
 
 #[derive(Clone)]
 pub struct Change {
@@ -30,15 +30,15 @@ pub struct BranchInfo {
 impl fmt::Display for BranchInfo {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let current_marker = if self.is_current { "* " } else { "  " };
+        let branch_name = if self.is_current {
+            self.name.clone().green().to_string()
+        } else {
+            self.name.to_string()
+        };
         let upstream_marker = if self.upstream {
-            String::new()
+            "".to_string()
         } else {
             " (no upstream)".red().to_string()
-        };
-        let branch_name = if self.is_current {
-            self.name.green()
-        } else {
-            self.name.normal()
         };
         write!(f, "{}{}{}", current_marker, branch_name, upstream_marker)
     }
@@ -46,9 +46,9 @@ impl fmt::Display for BranchInfo {
 
 pub fn get_branches() -> Result<Vec<BranchInfo>, git2::Error> {
     let repo = get_repository()?;
-    if let Err(e) = fetch_with_prune() {
-        eprintln!("Fetch failed: {}", e);
-    }
+    // if let Err(e) = fetch_with_prune() {
+    //     eprintln!("Fetch failed: {}", e);
+    // }
     let branches = repo.branches(Some(git2::BranchType::Local))?;
     let head = repo.head().ok();
     let current_branch = head.and_then(|h| h.shorthand().map(|s| s.to_string()));
@@ -70,6 +70,7 @@ pub fn get_branches() -> Result<Vec<BranchInfo>, git2::Error> {
     Ok(branch_list)
 }
 
+#[allow(dead_code)]
 fn fetch_with_prune() -> Result<(), std::io::Error> {
     let status = Command::new("git").arg("fetch").arg("--prune").status()?;
 
