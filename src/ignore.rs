@@ -15,18 +15,19 @@ pub fn run_ignore() -> Result<(), String> {
     let mut root = Node {
         path: dir,
         children: vec![],
+        is_selected: false,
     };
     create_file_tree(&mut root);
 
-    let current_node = &root;
+    let current_node = &mut root;
 
-    let _files = select_files(&current_node.children);
+    let _files = select_files(&mut current_node.children);
     Ok(())
 }
 
 const MAX_SIZE: usize = 7;
 
-fn select_files(items: &Vec<Node>) -> std::io::Result<()> {
+fn select_files(items: &mut Vec<Node>) -> std::io::Result<()> {
     enable_raw_mode()?;
     let mut stdout = stdout();
     stdout.execute(Hide)?;
@@ -86,7 +87,20 @@ fn select_files(items: &Vec<Node>) -> std::io::Result<()> {
             {
                 clear_terminal(start_row, start_row + size as u16 + 1)?;
                 stdout.execute(MoveTo(0, start_row - 1))?;
-                select_files(&items[selected].children)?;
+                select_files(&mut items[selected].children)?;
+                print_range(
+                    start_row as usize,
+                    highlight_row,
+                    &items[range.start..range.end],
+                )?;
+            }
+
+            if key_event.code == KeyCode::Char(' ')
+                && key_event.kind == KeyEventKind::Press
+                && !items.is_empty()
+            {
+                items[selected].is_selected = !items[selected].is_selected;
+                clear_terminal(start_row, start_row + size as u16 + 1)?;
                 print_range(
                     start_row as usize,
                     highlight_row,
@@ -121,10 +135,11 @@ fn calculate_table(selected: usize, size: usize, len: usize) -> (Range<usize>, u
 fn print_range(start: usize, highlight_row: usize, items: &[Node]) -> std::io::Result<()> {
     for i in 0..items.len() {
         stdout().execute(MoveTo(0, i as u16 + start as u16))?;
+        let selected = if items[i].is_selected { "[x]" } else { "[ ]"};
         if highlight_row == i {
-            println!("{}{}", "> ".cyan(), items[i].file_name().cyan());
+            println!("{} {} {}", ">".cyan(), selected.cyan(), items[i].file_name().cyan());
         } else {
-            println!("  {}", items[i].file_name())
+            println!("  {} {}", selected, items[i].file_name())
         }
     }
     println!(
@@ -146,6 +161,7 @@ fn clear_terminal(start: u16, end: u16) -> std::io::Result<()> {
 struct Node {
     path: PathBuf,
     children: Vec<Node>,
+    is_selected: bool,
 }
 
 impl Node {
@@ -169,6 +185,7 @@ fn create_file_tree(node: &mut Node) {
         node.children.push(Node {
             path: entry.path(),
             children: vec![],
+            is_selected: false,
         });
     }
 
