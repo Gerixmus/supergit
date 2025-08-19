@@ -1,3 +1,5 @@
+use std::fs::{self, File, OpenOptions};
+use std::io::{Error, Write};
 use std::ops::Range;
 use std::{env::current_dir, fs::read_dir, io::stdout, path::PathBuf, vec};
 
@@ -11,7 +13,9 @@ use crossterm::{
 
 pub fn run_ignore() -> Result<(), String> {
     let dir = current_dir().unwrap();
-    println!("Path: {}", dir.display());
+    // TODO: use the current content
+    let _ignore_content = read_ignore_file(&dir)
+        .map_err(|e| format!("An error occurred while reading .gitignore: {}", e))?;
     let mut root = Node {
         path: dir,
         children: vec![],
@@ -21,13 +25,52 @@ pub fn run_ignore() -> Result<(), String> {
 
     let current_node = &mut root;
 
-    let _files = select_files(&mut current_node.children);
+    let _result = select_files(&mut current_node.children)
+        .map_err(|e| format!("An error occurred while selecting files: {}", e))?;
+    let files = collect_files(&root);
+    insert_files(files)
+        .map_err(|e| format!("An error occurred while editing .gitignore: {}", e))?;
     Ok(())
+}
+
+fn insert_files(files: Vec<&str>) -> Result<(), Error> {
+    if !files.is_empty() {
+        let mut ignore_file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open("test_ignore")?;
+        writeln!(ignore_file)?;
+        writeln!(ignore_file, "# SuperGit")?;
+        for file in files {
+            writeln!(ignore_file, "{}", file)?;
+        }
+    };
+    Ok(())
+}
+
+fn collect_files(node: &Node) -> Vec<&str> {
+    let mut files: Vec<&str> = Vec::new();
+    for child in &node.children {
+        files.extend(collect_files(&child));
+    }
+    files.extend(
+        node.children
+            .iter()
+            .filter(|node| node.is_selected)
+            .map(|node| node.file_name()),
+    );
+    files
+}
+
+// TODO: return empty string or handle no file in else
+fn read_ignore_file(dir: &PathBuf) -> Result<String, Error> {
+    let contents = fs::read_to_string(dir.join(".gitignore"))?;
+    Ok(contents)
 }
 
 const MAX_SIZE: usize = 7;
 
-fn select_files(items: &mut Vec<Node>) -> std::io::Result<()> {
+fn select_files(items: &mut Vec<Node>) -> std::io::Result<bool> {
     enable_raw_mode()?;
     let mut stdout = stdout();
     stdout.execute(Hide)?;
@@ -43,12 +86,21 @@ fn select_files(items: &mut Vec<Node>) -> std::io::Result<()> {
     let mut selected = 0;
     let mut highlight_row = 0;
 
-    loop {
+    let mut should_continue = true;
+
+    while should_continue {
         if let Event::Key(key_event) = read()? {
             if key_event.code == KeyCode::Char('c')
                 && key_event.modifiers.contains(KeyModifiers::CONTROL)
             {
                 clear_terminal(start_row, start_row + size as u16 + 1)?;
+                should_continue = false;
+                break;
+            };
+
+            if key_event.code == KeyCode::Enter && key_event.kind == KeyEventKind::Press {
+                clear_terminal(start_row, start_row + size as u16 + 1)?;
+                should_continue = false;
                 break;
             };
 
@@ -87,7 +139,7 @@ fn select_files(items: &mut Vec<Node>) -> std::io::Result<()> {
             {
                 clear_terminal(start_row, start_row + size as u16 + 1)?;
                 stdout.execute(MoveTo(0, start_row - 1))?;
-                select_files(&mut items[selected].children)?;
+                should_continue = select_files(&mut items[selected].children)?;
                 print_range(
                     start_row as usize,
                     highlight_row,
@@ -111,14 +163,15 @@ fn select_files(items: &mut Vec<Node>) -> std::io::Result<()> {
             if key_event.code == KeyCode::Left && key_event.kind == KeyEventKind::Press {
                 clear_terminal(start_row, start_row + size as u16 + 1)?;
                 stdout.execute(MoveTo(0, start_row - 1))?;
-                return Ok(());
+                return Ok(true);
             }
         }
     }
+    clear_terminal(start_row, start_row + size as u16 + 1)?;
     stdout.execute(MoveTo(0, start_row))?;
     stdout.execute(Show)?;
     disable_raw_mode()?;
-    Ok(())
+    Ok(should_continue)
 }
 
 fn calculate_table(selected: usize, size: usize, len: usize) -> (Range<usize>, usize) {
@@ -135,9 +188,15 @@ fn calculate_table(selected: usize, size: usize, len: usize) -> (Range<usize>, u
 fn print_range(start: usize, highlight_row: usize, items: &[Node]) -> std::io::Result<()> {
     for i in 0..items.len() {
         stdout().execute(MoveTo(0, i as u16 + start as u16))?;
-        let selected = if items[i].is_selected { "[x]" } else { "[ ]"};
+        // let selected = if items[i].is_selected { "[x]" } else { "[ ]" };
+        let selected = "";
         if highlight_row == i {
-            println!("{} {} {}", ">".cyan(), selected.cyan(), items[i].file_name().cyan());
+            println!(
+                "{} {} {}",
+                ">".cyan(),
+                selected.cyan(),
+                items[i].file_name().cyan()
+            );
         } else {
             println!("  {} {}", selected, items[i].file_name())
         }
