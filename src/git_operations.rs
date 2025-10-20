@@ -138,11 +138,10 @@ pub fn add_files(selected_files: Vec<Change>, index: &mut git2::Index) -> Result
     Ok(())
 }
 
-pub fn commit_and_push(
+pub fn commit(
     repo: git2::Repository,
     mut index: git2::Index,
     message: String,
-    push: bool,
 ) -> Result<(), git2::Error> {
     let signature = repo.signature()?;
     let tree_oid = index.write_tree()?;
@@ -162,30 +161,7 @@ pub fn commit_and_push(
         &parent_refs,
     )?;
 
-    if push {
-        push_with_git_cli(repo.path())
-            .map_err(|e| git2::Error::from_str(&format!("Git CLI push failed: {}", e)))?;
-    }
-
     Ok(())
-}
-
-fn push_with_git_cli(repo_path: &Path) -> Result<(), std::io::Error> {
-    let status = Command::new("git")
-        .arg("push")
-        .arg("origin")
-        .arg("HEAD")
-        .current_dir(repo_path)
-        .status()?;
-
-    if status.success() {
-        Ok(())
-    } else {
-        Err(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            "git push failed",
-        ))
-    }
 }
 
 pub fn checkout_branch(branch: &str) -> Result<(), git2::Error> {

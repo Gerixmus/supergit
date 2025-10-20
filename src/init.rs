@@ -18,7 +18,6 @@ pub struct Config {
 #[derive(Deserialize, Serialize, Debug, Default)]
 #[serde(default)]
 pub struct Commit {
-    pub push_commits: bool,
     pub conventional_commits: bool,
     pub ticket_suffix: bool,
 }
@@ -27,7 +26,6 @@ impl Config {
     fn default() -> Self {
         Config {
             commit: Commit {
-                push_commits: false,
                 conventional_commits: false,
                 ticket_suffix: false,
             },
@@ -81,11 +79,6 @@ fn create_config() -> Result<Config, String> {
     let mut config = Config::default();
 
     let mut settings = vec![
-        Setting {
-            label: "Automatically push commits?",
-            get: |conf| conf.commit.push_commits,
-            set: |conf, val| conf.commit.push_commits = val,
-        },
         Setting {
             label: "Use conventional commits?",
             get: |conf| conf.commit.conventional_commits,
