@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.2.0](https://github.com/Gerixmus/supergit/compare/v0.1.13...v0.2.0) (2025-10-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* config file now uses tables
+
+### Features
+
+* restructure init command ([#46](https://github.com/Gerixmus/supergit/issues/46)) ([a796926](https://github.com/Gerixmus/supergit/commit/a7969268f29053b1588566c4117f6ef18225358a))
+
+
+### Bug Fixes
+
+* remove reset on branch display ([#48](https://github.com/Gerixmus/supergit/issues/48)) ([b628823](https://github.com/Gerixmus/supergit/commit/b6288231bbbc33012698fee7bccc330c96ebe2ee))
+
 ## [0.1.13](https://github.com/Gerixmus/supergit/compare/v0.1.12...v0.1.13) (2025-08-13)
 
 
