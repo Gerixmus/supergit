@@ -87,13 +87,9 @@ pub fn run_commit(commit_config: Commit) -> Result<(), String> {
     if should_commit {
         git_operations::add_files(selected_files, &mut index)
             .map_err(|e| format!("Failed to add files: {}", e))?;
-        git_operations::commit_and_push(repo, index, message, commit_config.push_commits)
-            .map_err(|e| format!("❌ Commit and push failed: {}", e))?;
-        if commit_config.push_commits {
-            println!("✅ Commit and push successful!");
-        } else {
-            println!("✅ Commit successful!");
-        }
+        git_operations::commit(repo, index, message)
+            .map_err(|e| format!("❌ Commit failed: {}", e))?;
+        println!("✅ Commit successful!");
     } else {
         println!("❌ Commit canceled or failed to get user confirmation.");
     }
