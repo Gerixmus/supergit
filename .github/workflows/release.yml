@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-      #TODO: uncomment when tested
-      - chore/reduce-binary-size
 
 env:
   CARGO_TERM_COLOR: always
@@ -29,24 +27,16 @@ jobs:
           manifest-file: .release-please-manifest.json
 
       - name: Build Windows binary
-        #TODO: uncomment when tested
-        # if: ${{ steps.release.outputs.release_created }}
+        if: ${{ steps.release.outputs.release_created }}
         run: cargo build --release
 
-      #TODO: uncomment when tested
-      # - name: Create GitHub Release
-      #   if: ${{ steps.release.outputs.release_created }}
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #     tag: ${{ steps.release.outputs.tag_name }}
-      #   run: |
-      #     gh release upload "$tag" \
-      #       --repo="$GITHUB_REPOSITORY" \
-      #       target\release\*.exe
-
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-executable
-          path: target/release/*.exe
+      - name: Create GitHub Release
+        if: ${{ steps.release.outputs.release_created }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ steps.release.outputs.tag_name }}
+        run: |
+          gh release upload "$tag" \
+            --repo="$GITHUB_REPOSITORY" \
+            target\release\*.exe
     
