@@ -13,34 +13,30 @@ permissions:
   pull-requests: write
 
 jobs:
-    release:
-        runs-on: ubuntu-latest
-        steps:
-          - name: Checkout code
-            uses: actions/checkout@v4
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-          - uses: googleapis/release-please-action@v4
-            id: release
-            with:
-              token: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}
-              config-file: release-please-config.json
-              manifest-file: .release-please-manifest.json
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          token: ${{ secrets.MY_RELEASE_PLEASE_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
 
-          - name: Install cross for cross-compilation
-            if: ${{ steps.release.outputs.release_created }}
-            run: cargo install cross
+      - name: Build Windows binary
+        if: ${{ steps.release.outputs.release_created }}
+        run: cargo build --release
 
-          - name: Build Windows executable
-            if: ${{ steps.release.outputs.release_created }}
-            run: cross build --target x86_64-pc-windows-gnu --release
-
-          - name: Create GitHub Release
-            if: ${{ steps.release.outputs.release_created }}
-            env:
-              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              tag: ${{ steps.release.outputs.tag_name }}
-            run: |
-              gh release upload "$tag" \
-                --repo="$GITHUB_REPOSITORY" \
-                target/x86_64-pc-windows-gnu/release/*.exe
+      - name: Create GitHub Release
+        if: ${{ steps.release.outputs.release_created }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ steps.release.outputs.tag_name }}
+        run: |
+          gh release upload "$tag" \
+            --repo="$GITHUB_REPOSITORY" \
+            target\release\*.exe
     
