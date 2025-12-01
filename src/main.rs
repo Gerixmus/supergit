@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, CommandFactory};
 
 mod branch;
 mod checkout;
@@ -53,7 +53,7 @@ fn main() {
         }
         Some(Commands::Init) => init::run_config(),
         None => {
-            println!("Default logic to implement later");
+            Cli::command().print_help().unwrap();
             Ok(())
         }
     };
