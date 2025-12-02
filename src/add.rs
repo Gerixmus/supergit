@@ -1,10 +1,10 @@
 use crate::git_operations::{self, Change};
-use inquire::{Confirm, MultiSelect, Select, Text};
+use inquire::MultiSelect;
 
 pub fn stage_files() -> Result<(), String> {
     let repo = git_operations::get_repository().map_err(|e| e.to_string())?;
 
-    let (changes, staged) = git_operations::get_changes(&repo);
+    let (changes, _staged) = git_operations::get_changes(&repo);
 
     if changes.is_empty() {
         println!("No untracked or modified files found.");
