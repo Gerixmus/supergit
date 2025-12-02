@@ -77,8 +77,7 @@ fn fetch_with_prune() -> Result<(), std::io::Error> {
     if status.success() {
         Ok(())
     } else {
-        Err(std::io::Error::new(
-            std::io::ErrorKind::Other,
+        Err(std::io::Error::other(
             "git fetch with prune failed",
         ))
     }
@@ -128,9 +127,9 @@ pub fn add_files(selected_files: Vec<Change>, index: &mut git2::Index) -> Result
     for change in selected_files.iter() {
         let path = Path::new(&change.path);
         if change.status == Status::WT_DELETED {
-            index.remove_path(path).map_err(|err| err)?;
+            index.remove_path(path)?;
         } else {
-            index.add_path(path).map_err(|err| err)?;
+            index.add_path(path)?;
         }
     }
 

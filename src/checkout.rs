@@ -37,7 +37,7 @@ pub fn run_checkout(conventional_branches: bool, create_new: bool) -> Result<(),
         } else {
             println!("❌ Commit canceled or failed to get user confirmation.");
         }
-        return Ok(());
+        Ok(())
     } else {
         let branches = git_operations::get_branches().map_err(|e| e.to_string())?;
         let available_branches: Vec<&git_operations::BranchInfo> = branches

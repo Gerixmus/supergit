@@ -78,7 +78,7 @@ struct Setting<'a> {
 fn create_config() -> Result<Config, String> {
     let mut config = Config::default();
 
-    let mut settings = vec![
+    let mut settings = [
         Setting {
             label: "Use conventional commits?",
             get: |conf| conf.commit.conventional_commits,

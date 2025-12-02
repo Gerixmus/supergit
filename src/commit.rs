@@ -30,7 +30,7 @@ pub fn run_commit(commit_config: Commit) -> Result<(), String> {
         let branch = git_operations::get_current_branch().unwrap();
         re.find(&branch)
             .map(|regex_match| format!(" ({})", regex_match.as_str()))
-            .unwrap_or_else(|| "".to_string())
+            .unwrap_or_default()
     } else {
         "".to_string()
     };
@@ -49,7 +49,7 @@ pub fn run_commit(commit_config: Commit) -> Result<(), String> {
             let breaking_change_desc = Text::new("Breaking change description:")
                 .prompt()
                 .map_err(|e| format!("An error occurred: {}", e))?;
-            commit_header.push_str("!");
+            commit_header.push('!');
             format!("\nBREAKING CHANGE: {}", breaking_change_desc)
         } else {
             String::new()
