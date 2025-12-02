@@ -1,5 +1,6 @@
 use clap::{Parser, Subcommand, CommandFactory};
 
+mod add;
 mod branch;
 mod checkout;
 mod commit;
@@ -17,6 +18,8 @@ struct Cli {
 enum Commands {
     #[command(about = "Configure the tool")]
     Init,
+    #[command(about = "Add contents of new or changed files to the index")]
+    Add,
     #[command(about = "Record changes to the repository")]
     Commit,
     #[command(about = "List, create, or delete branches")]
@@ -52,6 +55,7 @@ fn main() {
             Ok(())
         }
         Some(Commands::Init) => init::run_config(),
+        Some(Commands::Add) => add::stage_files(),
         None => {
             Cli::command().print_help().unwrap();
             Ok(())
