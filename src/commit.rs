@@ -39,6 +39,12 @@ pub fn run_commit(commit_config: Commit) -> Result<(), String> {
         .prompt()
         .map_err(|e| format!("An error occurred: {}", e))?;
 
+    let body = if commit_config.conventional_commits {
+        let mut scope = Text::new("Body:")
+            .prompt()
+            .map_err(|e| format!("An error occurred: {}", e))?;
+    };
+
     let footer = if commit_config.conventional_commits {
         let is_breaking_change = Confirm::new("BREAKING CHANGE?")
             .with_default(false)
