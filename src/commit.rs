@@ -40,9 +40,15 @@ pub fn run_commit(commit_config: Commit) -> Result<(), String> {
         .map_err(|e| format!("An error occurred: {}", e))?;
 
     let body = if commit_config.conventional_commits {
-        let mut scope = Text::new("Body:")
+        let mut body_text = Text::new("Body:")
             .prompt()
             .map_err(|e| format!("An error occurred: {}", e))?;
+        if !body_text.is_empty() {
+            body_text = format!("\n\n{}", body_text);
+        };
+        body_text
+    } else {
+        String::new()
     };
 
     let footer = if commit_config.conventional_commits {
@@ -56,7 +62,7 @@ pub fn run_commit(commit_config: Commit) -> Result<(), String> {
                 .prompt()
                 .map_err(|e| format!("An error occurred: {}", e))?;
             commit_header.push('!');
-            format!("\nBREAKING CHANGE: {}", breaking_change_desc)
+            format!("\n\nBREAKING CHANGE: {}", breaking_change_desc)
         } else {
             String::new()
         };
@@ -66,7 +72,7 @@ pub fn run_commit(commit_config: Commit) -> Result<(), String> {
         String::new()
     };
 
-    let message = format!("{}{}{}{}", commit_header, user_input, ticket, footer);
+    let message = format!("{}{}{}{}{}", commit_header, user_input, ticket, body, footer);
 
     print_in_box(&message);
 
