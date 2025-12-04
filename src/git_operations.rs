@@ -1,7 +1,7 @@
 use core::fmt;
+use crossterm::style::Stylize;
 use git2::{Repository, Status, StatusOptions};
 use std::{path::Path, process::Command};
-use crossterm::style::{Stylize};
 
 #[derive(Clone)]
 pub struct Change {
@@ -77,9 +77,7 @@ fn fetch_with_prune() -> Result<(), std::io::Error> {
     if status.success() {
         Ok(())
     } else {
-        Err(std::io::Error::other(
-            "git fetch with prune failed",
-        ))
+        Err(std::io::Error::other("git fetch with prune failed"))
     }
 }
 

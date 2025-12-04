@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand, CommandFactory};
+use clap::{CommandFactory, Parser, Subcommand};
 
 mod add;
 mod branch;

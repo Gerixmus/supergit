@@ -72,7 +72,10 @@ pub fn run_commit(commit_config: Commit) -> Result<(), String> {
         String::new()
     };
 
-    let message = format!("{}{}{}{}{}", commit_header, user_input, ticket, body, footer);
+    let message = format!(
+        "{}{}{}{}{}",
+        commit_header, user_input, ticket, body, footer
+    );
 
     print_in_box(&message);
 
