@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.2.0](https://github.com/Gerixmus/gitquick/compare/v0.1.13...v0.2.0) (2025-12-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* config file now uses tables
+
+### Features
+
+* **commit:** add body ([#56](https://github.com/Gerixmus/gitquick/issues/56)) ([0028930](https://github.com/Gerixmus/gitquick/commit/002893080055cc7cbf2f34914c2d6bd3853c52cf))
+* implement add command ([#54](https://github.com/Gerixmus/gitquick/issues/54)) ([0a908c9](https://github.com/Gerixmus/gitquick/commit/0a908c9530522629372ab4a72c537badd39b0a69))
+* restructure init command ([#46](https://github.com/Gerixmus/gitquick/issues/46)) ([a796926](https://github.com/Gerixmus/gitquick/commit/a7969268f29053b1588566c4117f6ef18225358a))
+
+
+### Bug Fixes
+
+* remove reset on branch display ([#48](https://github.com/Gerixmus/gitquick/issues/48)) ([b628823](https://github.com/Gerixmus/gitquick/commit/b6288231bbbc33012698fee7bccc330c96ebe2ee))
+
 ## [0.1.13](https://github.com/Gerixmus/gitquick/compare/v0.1.12...v0.1.13) (2025-08-13)
 
 
