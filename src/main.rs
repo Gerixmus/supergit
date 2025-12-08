@@ -8,7 +8,7 @@ mod git_operations;
 mod init;
 
 #[derive(Parser)]
-#[command(name = "sg", version = env!("CARGO_PKG_VERSION"), about = "SuperGit: Simplify your git workflow")]
+#[command(name = "gq", version = env!("CARGO_PKG_VERSION"), about = "GitQuick: Simplify your git workflow")]
 struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,
