@@ -3,6 +3,10 @@ name = "gitquick"
 version = "0.1.13"
 edition = "2021"
 
+[[bin]]
+name = "gq"
+path = "src/main.rs"
+
 [dependencies]
 inquire = "0.7.5"
 git2 = "0.20.0"
