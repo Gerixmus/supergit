@@ -352,7 +352,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "gq"
+name = "gitquick"
 version = "0.1.13"
 dependencies = [
  "clap",
