@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.2.0](https://github.com/Gerixmus/gitquick/compare/v0.1.13...v0.2.0) (2025-12-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* due to the project rename the default config path needed to be changed
+* config file now uses tables
+
+### Features
+
+* allow custom commit types ([#63](https://github.com/Gerixmus/gitquick/issues/63)) ([fc6b969](https://github.com/Gerixmus/gitquick/commit/fc6b96933da76c9c1244431d8e1061a158a7c065))
+* **commit:** add body ([#56](https://github.com/Gerixmus/gitquick/issues/56)) ([0028930](https://github.com/Gerixmus/gitquick/commit/002893080055cc7cbf2f34914c2d6bd3853c52cf))
+* implement add command ([#54](https://github.com/Gerixmus/gitquick/issues/54)) ([0a908c9](https://github.com/Gerixmus/gitquick/commit/0a908c9530522629372ab4a72c537badd39b0a69))
+* read custom branch types from toml ([#65](https://github.com/Gerixmus/gitquick/issues/65)) ([9cb303a](https://github.com/Gerixmus/gitquick/commit/9cb303a3b2f517d5f5727889584ebb8512bff16f))
+* restructure init command ([#46](https://github.com/Gerixmus/gitquick/issues/46)) ([a796926](https://github.com/Gerixmus/gitquick/commit/a7969268f29053b1588566c4117f6ef18225358a))
+
+
+### Bug Fixes
+
+* remove reset on branch display ([#48](https://github.com/Gerixmus/gitquick/issues/48)) ([b628823](https://github.com/Gerixmus/gitquick/commit/b6288231bbbc33012698fee7bccc330c96ebe2ee))
+* use default values if not provided in toml ([#66](https://github.com/Gerixmus/gitquick/issues/66)) ([02134fb](https://github.com/Gerixmus/gitquick/commit/02134fb8822e5b2708003b3cc54848b782856246))
+
+
+### Code Refactoring
+
+* change config path to contain gitquick ([#64](https://github.com/Gerixmus/gitquick/issues/64)) ([eacf165](https://github.com/Gerixmus/gitquick/commit/eacf165786dc867444138f034ddbbf31bc3e6cda))
+
 ## [0.1.13](https://github.com/Gerixmus/gitquick/compare/v0.1.12...v0.1.13) (2025-08-13)
 
 
