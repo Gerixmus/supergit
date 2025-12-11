@@ -17,7 +17,7 @@ pub fn run_commit(commit_config: Commit) -> Result<(), String> {
         .map_err(|e| format!("Error accessing index: {}", e))?;
 
     let mut commit_header = if commit_config.conventional_commits {
-        let type_and_scope = get_type_and_scope()
+        let type_and_scope = get_type_and_scope(commit_config.types)
             .map_err(|e| format!("An error occurred: {}", e))
             .map_err(|e| format!("Failed to get confirmation: {}", e))?;
         type_and_scope
@@ -106,20 +106,8 @@ fn print_in_box(message: &str) {
     println!("└{}┘", "─".repeat(max_len + 2));
 }
 
-fn get_type_and_scope() -> Result<String, String> {
-    let options = vec![
-        "fix",
-        "feat",
-        "chore",
-        "docs",
-        "style",
-        "refactor",
-        "perf",
-        "test",
-        "improvement",
-    ];
-
-    let selected_type = Select::new("Select commit type", options)
+fn get_type_and_scope(commit_types: Vec<String>) -> Result<String, String> {
+    let selected_type = Select::new("Select commit type", commit_types)
         .prompt()
         .map_err(|e| format!("An error occurred: {}", e))?;
 

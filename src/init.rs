@@ -20,6 +20,7 @@ pub struct Config {
 pub struct Commit {
     pub conventional_commits: bool,
     pub ticket_suffix: bool,
+    pub types: Vec<String>,
 }
 
 impl Config {
@@ -28,6 +29,18 @@ impl Config {
             commit: Commit {
                 conventional_commits: false,
                 ticket_suffix: false,
+                types: vec![
+                    "build".into(),
+                    "ci".into(),
+                    "docs".into(),
+                    "feat".into(),
+                    "fix".into(),
+                    "perf".into(),
+                    "refactor".into(),
+                    "style".into(),
+                    "test".into(),
+                    "revert".into(),
+                ],
             },
             conventional_branches: false,
         }
