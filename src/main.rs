@@ -48,7 +48,7 @@ fn main() {
             force_delete,
         }) => branch::run_branch(*delete, *force_delete),
         Some(Commands::Checkout { create_new }) => {
-            checkout::run_checkout(config.conventional_branches, *create_new)
+            checkout::run_checkout(config.branch, *create_new)
         }
         Some(Commands::Ignore) => {
             println!("Ignore logic to implement later");

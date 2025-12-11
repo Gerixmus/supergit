@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 #[serde(default)]
 pub struct Config {
     pub commit: Commit,
-    pub conventional_branches: bool,
+    pub branch: Branch,
 }
 
 #[derive(Deserialize, Serialize, Debug, Default)]
@@ -20,6 +20,13 @@ pub struct Config {
 pub struct Commit {
     pub conventional_commits: bool,
     pub ticket_suffix: bool,
+    pub types: Vec<String>,
+}
+
+#[derive(Deserialize, Serialize, Debug, Default)]
+#[serde(default)]
+pub struct Branch {
+    pub conventional_branches: bool,
     pub types: Vec<String>,
 }
 
@@ -42,7 +49,16 @@ impl Config {
                     "revert".into(),
                 ],
             },
-            conventional_branches: false,
+            branch: Branch {
+                conventional_branches: false,
+                types: vec![
+                    "feature".into(),
+                    "bugfix".into(),
+                    "hotfix".into(),
+                    "release".into(),
+                    "chore".into(),
+                ],
+            },
         }
     }
 }
@@ -104,8 +120,8 @@ fn create_config() -> Result<Config, String> {
         },
         Setting {
             label: "Use conventional branches?",
-            get: |conf| conf.conventional_branches,
-            set: |conf, val| conf.conventional_branches = val,
+            get: |conf| conf.branch.conventional_branches,
+            set: |conf, val| conf.branch.conventional_branches = val,
         },
     ];
 
