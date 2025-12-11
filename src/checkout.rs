@@ -1,14 +1,11 @@
+use crate::{git_operations, init::Branch};
 use inquire::{Confirm, Select};
 use regex::Regex;
 
-use crate::git_operations;
-
-const BRANCH_TYPES: [&str; 5] = ["feature", "bugfix", "hotfix", "release", "chore"];
-
-pub fn run_checkout(conventional_branches: bool, create_new: bool) -> Result<(), String> {
+pub fn run_checkout(branch_config: Branch, create_new: bool) -> Result<(), String> {
     if create_new {
-        let branch_type = if conventional_branches {
-            let selected_type = Select::new("Select branch type", BRANCH_TYPES.to_vec())
+        let branch_type = if branch_config.conventional_branches {
+            let selected_type = Select::new("Select branch type", branch_config.types)
                 .prompt()
                 .map_err(|e| format!("Prompt error: {}", e))?;
             format!("{}/", selected_type)
