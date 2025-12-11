@@ -15,7 +15,7 @@ pub struct Config {
     pub branch: Branch,
 }
 
-#[derive(Deserialize, Serialize, Debug, Default)]
+#[derive(Deserialize, Serialize, Debug)]
 #[serde(default)]
 pub struct Commit {
     pub conventional_commits: bool,
@@ -23,42 +23,45 @@ pub struct Commit {
     pub types: Vec<String>,
 }
 
-#[derive(Deserialize, Serialize, Debug, Default)]
+#[derive(Deserialize, Serialize, Debug)]
 #[serde(default)]
 pub struct Branch {
     pub conventional_branches: bool,
     pub types: Vec<String>,
 }
 
-impl Config {
+impl Default for Commit {
     fn default() -> Self {
-        Config {
-            commit: Commit {
-                conventional_commits: false,
-                ticket_suffix: false,
-                types: vec![
-                    "build".into(),
-                    "ci".into(),
-                    "docs".into(),
-                    "feat".into(),
-                    "fix".into(),
-                    "perf".into(),
-                    "refactor".into(),
-                    "style".into(),
-                    "test".into(),
-                    "revert".into(),
-                ],
-            },
-            branch: Branch {
-                conventional_branches: false,
-                types: vec![
-                    "feature".into(),
-                    "bugfix".into(),
-                    "hotfix".into(),
-                    "release".into(),
-                    "chore".into(),
-                ],
-            },
+        Self {
+            conventional_commits: false,
+            ticket_suffix: false,
+            types: vec![
+                "build".into(),
+                "ci".into(),
+                "docs".into(),
+                "feat".into(),
+                "fix".into(),
+                "perf".into(),
+                "refactor".into(),
+                "style".into(),
+                "test".into(),
+                "revert".into(),
+            ],
+        }
+    }
+}
+
+impl Default for Branch {
+    fn default() -> Self {
+        Self {
+            conventional_branches: false,
+            types: vec![
+                "feature".into(),
+                "bugfix".into(),
+                "hotfix".into(),
+                "release".into(),
+                "chore".into(),
+            ],
         }
     }
 }
