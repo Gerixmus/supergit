@@ -53,7 +53,7 @@ pub fn run_config() -> Result<(), String> {
 }
 
 fn get_config_path() -> PathBuf {
-    let proj_dirs = ProjectDirs::from("", "", "supergit").expect("Failed to get project directory");
+    let proj_dirs = ProjectDirs::from("", "", "gitquick").expect("Failed to get project directory");
 
     let directory = proj_dirs.config_dir();
     directory.join("config.toml")
