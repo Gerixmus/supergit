@@ -6,6 +6,7 @@ mod checkout;
 mod commit;
 mod git_operations;
 mod init;
+mod revert;
 
 #[derive(Parser)]
 #[command(name = "gq", version = env!("CARGO_PKG_VERSION"), about = "GitQuick: Simplify your git workflow")]
@@ -34,8 +35,8 @@ enum Commands {
         #[arg(short = 'b', long = "branch", help = "Create a new branch")]
         create_new: bool,
     },
-    #[command(hide = true)]
-    Ignore,
+    #[command(about = "Revert some existing commits")]
+    Revert,
 }
 
 fn main() {
@@ -50,10 +51,7 @@ fn main() {
         Some(Commands::Checkout { create_new }) => {
             checkout::run_checkout(config.branch, *create_new)
         }
-        Some(Commands::Ignore) => {
-            println!("Ignore logic to implement later");
-            Ok(())
-        }
+        Some(Commands::Revert) => revert::run_revert(),         
         Some(Commands::Init) => init::run_config(),
         Some(Commands::Add) => add::stage_files(),
         None => {
